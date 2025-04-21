@@ -1,21 +1,24 @@
-from datetime import datetime, timedelta
-from uuid import UUID
-from typing import Optional
+from src.infrastructure.kafka.producers import EventPublisher
+from src.domain.events.events import UserRegistered
 from .models import User
 from .value_objects.password_hash import PasswordHash
 from .value_objects.email import EmailAddress
+from .value_objects.username import Username
 from .repository import UserRepository
 
-class UserRegistrationService:
+from datetime import datetime
+
+class UserService:
     """
         Registration service
     """
     
-    def __init__(self, user_repo: UserRepository):
+    def __init__(self, user_repo: UserRepository, event_publisher: EventPublisher):
         """
             Initing service with abstract UserRepo implemenation
         """
         self.user_repo = user_repo
+        self._publisher = event_publisher
 
     async def register_user(
         self,
@@ -30,17 +33,28 @@ class UserRegistrationService:
         # object value usage
         email_vo = EmailAddress(email)
         password_hash = PasswordHash(hash_password)
-        
+        username = Username(username)
+
         if await self.user_repo.get_by_email(email_vo.value):
             raise ValueError("Email already exists")
         
         user = User(
+            id=None,
             email=email_vo,
             password_hash=password_hash,
             username=username
         )
         
         await self.user_repo.add(user)
+
+        await self._publisher.publish(
+            UserRegistered(
+                user_id=user.id,
+                email=user.email.value,
+                username=user.username,
+                occurred_on=datetime.utcnow()
+            )
+        )
         return user
 
 
@@ -53,7 +67,7 @@ class UserRegistrationService:
 #         self.user_repo = user_repo
 #         self.reset_tokens = {}  # Временное хранилище токенов (в продакшене - Redis)
 
-#     async def generate_reset_token(self, user_id: UUID) -> str:
+#     async def generate_reset_token(self, user_id: int) -> str:
 #         """Генерация токена сброса пароля"""
 #         token = str(uuid4())
 #         self.reset_tokens[token] = {

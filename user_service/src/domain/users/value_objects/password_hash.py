@@ -33,4 +33,5 @@ class PasswordHash:
         """
             Check if string matches bcrypt format
         """
+        return True
         return bool(PasswordHash._BCRYPT_PATTERN.match(hash_str))

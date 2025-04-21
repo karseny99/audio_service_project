@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from uuid import UUID
 from typing import Optional, List
 from .models import User
 
@@ -7,7 +6,7 @@ class UserRepository(ABC):
     """Abstract interface for users logic"""
     
     @abstractmethod
-    async def get_by_id(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id(self, user_id: int) -> Optional[User]:
         """
             Find user by id, None if not exists
         """
@@ -35,7 +34,7 @@ class UserRepository(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def delete(self, user_id: UUID) -> bool:
+    async def delete(self, user_id: int) -> bool:
         """
             Delete user by user_id, 
             true if successfully deleted

@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 from datetime import datetime
-from uuid import UUID
 from .value_objects.email import EmailAddress
 from .value_objects.password_hash import PasswordHash
 from .value_objects.username import Username
 
 @dataclass(frozen=False)  
 class User:
-    id: UUID
+    id: int
     email: EmailAddress          
     username: Username           
     password_hash: PasswordHash  

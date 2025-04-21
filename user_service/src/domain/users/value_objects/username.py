@@ -8,4 +8,4 @@ class Username:
         if len(self.value) not in range(3, 16) :
             raise ValueError("Bad username's length")
         if not self.value.isalnum():
-            raise ValueError("Must contain only digits or letters")
+            raise ValueError("Username must contain only digits or letters")
