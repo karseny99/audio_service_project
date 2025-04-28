@@ -1,6 +1,5 @@
-from sqlalchemy import Column, String, UUID, DateTime, func
+from sqlalchemy import Column, String, DateTime, func, BigInteger, Text
 from sqlalchemy.orm import declarative_base
-from uuid import uuid4
 from src.domain.users.models import User as DomainUser
 from src.domain.users.value_objects.email import EmailAddress
 from src.domain.users.value_objects.password_hash import PasswordHash
@@ -14,11 +13,11 @@ class UserORM(Base):
     """
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    username = Column(String(255), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
-    username = Column(String(50), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    password_hash = Column(Text, nullable=False)
 
     @classmethod
     def from_domain(cls, user: DomainUser) -> "UserORM":
@@ -26,10 +25,10 @@ class UserORM(Base):
             Convert domain to alchemy
         """
         return cls(
-            id=user.id,
-            email=user.email.value,  # Извлекаем значение из VO
             username=user.username.value,
-            password_hash=user.password_hash.value
+            email=user.email.value,
+            created_at=user.created_at,
+            password_hash=user.password_hash.value,
         )
 
     def to_domain(self) -> DomainUser:
@@ -37,7 +36,7 @@ class UserORM(Base):
             Convert alchemy to domain
         """
         return DomainUser(
-            id=self.id,
+            id=self.user_id,
             email=EmailAddress(self.email),
             username=Username(self.username),
             password_hash=PasswordHash(self.password_hash),
@@ -48,6 +47,8 @@ class UserORM(Base):
         """
             Update model with domain data
         """
+        self.user_id = user.id
         self.email = user.email.value
         self.username = user.username.value
+        created_at = user.created_at
         self.password_hash = user.password_hash.value

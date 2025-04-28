@@ -15,9 +15,9 @@ class Settings(BaseSettings):
     # PostgreSQL
     POSTGRES_HOST: str = 'localhost'
     POSTGRES_PORT: int = 5432
-    POSTGRES_USER: str = 'password'
-    POSTGRES_PASSWORD: str = 'password'
-    POSTGRES_DB: str = 'audio'
+    POSTGRES_USER: str = 'user'
+    POSTGRES_PASSWORD: str = '1'
+    POSTGRES_DB: str = 'audio_db'
     
     # Kafka
     # KAFKA_BOOTSTRAP_SERVERS: str
