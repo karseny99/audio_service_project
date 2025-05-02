@@ -1,0 +1,5 @@
+// События, которые контекст публикует
+
+message UserRegistered {
+    string user_id = 1;
+}
