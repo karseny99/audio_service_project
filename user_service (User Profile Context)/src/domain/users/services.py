@@ -4,7 +4,6 @@ from .value_objects.email import EmailAddress
 from .value_objects.username import Username
 
 from datetime import datetime
-from src.core.protos.generated import commands_pb2
 
 class UserRegistrationService:
     """
@@ -17,20 +16,13 @@ class UserRegistrationService:
     def RegisterUser(
         cls,
         email: str,
-        raw_password: str,
-        username: str
+        username: str,
+        password: str,
     ) -> User:
         
         email_vo = EmailAddress(email)
-        password_hash = PasswordHash(raw_password)
+        password_hash = PasswordHash(password)
         username_vo = Username(username)
-        
-        return commands_pb2.RegisterUserResponse(
-            user_id=str(5),
-            username=username_vo.value,
-            email=email_vo.value
-        )
-
 
         return User(
             email=email_vo,

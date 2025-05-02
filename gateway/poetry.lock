@@ -1,0 +1,40 @@
+[[package]]
+name = "grpcio"
+version = "1.72.0"
+description = "HTTP/2-based RPC framework"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.extras]
+protobuf = ["grpcio-tools (>=1.72.0)"]
+
+[[package]]
+name = "grpcio-tools"
+version = "1.72.0"
+description = "Protobuf code generator for gRPC"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+grpcio = ">=1.72.0"
+protobuf = ">=6.30.0,<7.0dev"
+
+[[package]]
+name = "protobuf"
+version = "6.30.2"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.10"
+content-hash = "bcec3a6fe6f52f027d15fbe60885ce2e7a1e1a8e814a43746144017477bd11ea"
+
+[metadata.files]
+grpcio = []
+grpcio-tools = []
+protobuf = []

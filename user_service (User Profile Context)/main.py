@@ -10,11 +10,27 @@ import grpc
 from src.core.protos.generated import commands_pb2
 from src.core.protos.generated import commands_pb2_grpc
 
+class UserCommandServicer(commands_pb2_grpc.UserCommandServiceServicer):
+    def RegisterUser(self, request, context):
+        try:
+            
+            # user = UserRegistrationService.RegisterUser(request.email, request.username, request.password)
+
+            return commands_pb2.RegisterUserResponse(
+                user_id=str(5)
+            )
+            
+        except ValueError as e:
+            # Преобразуем доменные ошибки в gRPC-статус
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Server error: {str(e)}")
+
 
 def serve_grpc():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     commands_pb2_grpc.add_UserCommandServiceServicer_to_server(
-        UserRegistrationService(), server)
+        UserCommandServicer(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()
@@ -50,4 +66,4 @@ async def main():
         # app.run()      # Kafka-консьюмер
     )
 
-asyncio.run(main())
+asyncio.run(serve_grpc())
