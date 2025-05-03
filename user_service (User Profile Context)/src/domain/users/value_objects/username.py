@@ -6,7 +6,8 @@ class Username:
     value: str
 
     def __post_init__(self):
-        if len(self.value) not in range(3, 16) :
+        if len(self.value) not in range(3, 16):
+            print(self.value)
             raise ValueObjectException("Bad username's length")
         if not self.value.isalnum():
             raise ValueObjectException("Username must contain only digits or letters")

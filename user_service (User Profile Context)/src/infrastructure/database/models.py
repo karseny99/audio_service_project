@@ -33,6 +33,16 @@ class UserORM(Base):
             password_hash=user.password_hash.value,
             created_at=user.created_at
         )
+    
+    def update_from_domain(self, user: DomainUser) -> None:
+        """
+            Update model with domain data
+        """
+        self.user_id = user.id
+        self.email = user.email.value
+        self.username = user.username.value
+        self.created_at = user.created_at
+        self.password_hash = user.password_hash.value
 
     def to_domain(self) -> DomainUser:
         return DomainUser(

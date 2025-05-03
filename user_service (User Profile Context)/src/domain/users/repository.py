@@ -20,14 +20,21 @@ class UserRepository(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def add(self, user: User) -> None:
+    async def get_by_username(self, username: str) -> Optional[User]:
+        """
+            Find user by email, None if not exists
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    async def add(self, user: User) -> Optional[User]:
         """
             Add new user
         """
         raise NotImplementedError
     
     @abstractmethod
-    async def update(self, user: User) -> None:
+    async def update(self, user: User) -> Optional[User]:
         """
             Update user
         """

@@ -31,18 +31,31 @@ class PostgresUserRepository(UserRepository):
         user_orm = result.scalar_one_or_none()
         return user_orm.to_domain() if user_orm else None
 
-    @ConnectionDecorator()
-    async def add(self, user: User, session: Optional[AsyncSession] = None) -> None:
-        """Add new user to db"""
-        auth_orm = UserORM.from_domain(user) # was UserORM.from_domain(user)
-        session.add(auth_orm)
+    @ConnectionDecorator(isolation_level="READ COMMITTED")
+    async def get_by_username(self, username: str, session: Optional[AsyncSession] = None) -> Optional[User]:
+        stmt = select(UserORM).where(UserORM.username == username)
+        result = await session.execute(stmt)
+        user_orm = result.scalar_one_or_none()
+        return user_orm.to_domain() if user_orm else None
 
     @ConnectionDecorator()
-    async def update(self, user: User, session: Optional[AsyncSession] = None) -> None:
-        """Update user in db"""
+    async def add(self, user: User, session: Optional[AsyncSession] = None) -> Optional[User]:
+        """Add new user to db"""
+        auth_orm = UserORM.from_domain(user)
+        session.add(auth_orm)
+        await session.flush()       
+        return auth_orm.to_domain()
+
+    @ConnectionDecorator()
+    async def update(self, user: User, session: Optional[AsyncSession] = None) -> Optional[User]:
+        """Update user in db ??????????????????????????????????????????"""
         user_orm = await session.get(UserORM, user.id)
-        if user_orm:
-            user_orm.update_from_domain(user)
+        if not user_orm:
+            return None
+
+        user_orm.update_from_domain(user)
+        await session.flush()
+        return user_orm.to_domain()
 
     @ConnectionDecorator()
     async def delete(self, user_id: int, session: Optional[AsyncSession] = None) -> bool:

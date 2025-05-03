@@ -1,0 +1,40 @@
+gateway/
+├── src/
+│   ├── core/                  # Общие зависимости и утилиты
+│   │   ├── config/            # Настройки (env-переменные)
+│   │   │   └── settings.py
+│   │   ├── dependencies/      # FastAPI Depends
+│   │   │   ├── grpc_clients.py  # Инициализация gRPC-каналов
+│   │   │   └── auth.py        # Аутентификация
+│   │   ├── exceptions.py      # Кастомные HTTP-исключения
+│   │   └── middleware/        # Middleware
+│   │       ├── logging.py
+│   │       └── error_handling.py
+│   │
+│   ├── protos/                # Сгенерированные gRPC-файлы (из libs/protos)
+│   │   └── user_context/      # Автогенеренные _pb2.py
+│   │
+│   ├── services/              # Клиенты для gRPC-сервисов
+│   │   ├── user_service.py    # Обёртки для UserCommandService
+│   │   └── playlist_service.py
+│   │
+│   ├── api/                   # FastAPI роутеры
+│   │   ├── v1/                # Версионирование
+│   │   │   ├── users.py       # /api/v1/users/...
+│   │   │   ├── playlists.py
+│   │   │   └── __init__.py
+│   │   └── healthcheck.py     # /health
+│   │
+│   └── models/                # Pydantic-модели для запросов/ответов
+│       ├── users.py
+│       └── playlists.py
+│   
+│
+├── main.py                # FastAPI app
+├── tests/                     # Тесты
+│   ├── unit/
+│   │   └── test_user_routes.py
+│   └── conftest.py
+│
+├── requirements.txt           # Зависимости
+└── Dockerfile

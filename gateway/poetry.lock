@@ -1,4 +1,12 @@
 [[package]]
+name = "annotated-types"
+version = "0.7.0"
+description = "Reusable constraint types to use with typing.Annotated"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
 name = "grpcio"
 version = "1.72.0"
 description = "HTTP/2-based RPC framework"
@@ -29,12 +37,98 @@ category = "main"
 optional = false
 python-versions = ">=3.9"
 
+[[package]]
+name = "pydantic"
+version = "2.11.4"
+description = "Data validation using Python type hints"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+annotated-types = ">=0.6.0"
+pydantic-core = "2.33.2"
+typing-extensions = ">=4.12.2"
+typing-inspection = ">=0.4.0"
+
+[package.extras]
+email = ["email-validator (>=2.0.0)"]
+timezone = ["tzdata"]
+
+[[package]]
+name = "pydantic-core"
+version = "2.33.2"
+description = "Core functionality for Pydantic validation and serialization"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
+
+[[package]]
+name = "pydantic-settings"
+version = "2.9.1"
+description = "Settings management using Pydantic"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+pydantic = ">=2.7.0"
+python-dotenv = ">=0.21.0"
+typing-inspection = ">=0.4.0"
+
+[package.extras]
+aws-secrets-manager = ["boto3-stubs", "boto3 (>=1.35.0)"]
+azure-key-vault = ["azure-identity (>=1.16.0)", "azure-keyvault-secrets (>=4.8.0)"]
+gcp-secret-manager = ["google-cloud-secret-manager (>=2.23.1)"]
+toml = ["tomli (>=2.0.1)"]
+yaml = ["pyyaml (>=6.0.1)"]
+
+[[package]]
+name = "python-dotenv"
+version = "1.1.0"
+description = "Read key-value pairs from a .env file and set them as environment variables"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.extras]
+cli = ["click (>=5.0)"]
+
+[[package]]
+name = "typing-extensions"
+version = "4.13.2"
+description = "Backported and Experimental Type Hints for Python 3.8+"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "typing-inspection"
+version = "0.4.0"
+description = "Runtime typing introspection tools"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+typing-extensions = ">=4.12.0"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "bcec3a6fe6f52f027d15fbe60885ce2e7a1e1a8e814a43746144017477bd11ea"
+content-hash = "8080334c8203debfa2ec76f5818adabc02365622be0736e7a1fe05119078dece"
 
 [metadata.files]
+annotated-types = []
 grpcio = []
 grpcio-tools = []
 protobuf = []
+pydantic = []
+pydantic-core = []
+pydantic-settings = []
+python-dotenv = []
+typing-extensions = []
+typing-inspection = []

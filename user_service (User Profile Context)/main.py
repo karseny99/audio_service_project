@@ -1,57 +1,27 @@
-import asyncio
-from src.domain.users.services import UserRegistrationService
-from src.infrastructure.database.repositories.user_repository \
-    import PostgresUserRepository
-from src.domain.users.models import User
-
-
-from concurrent import futures
-import grpc
-from src.core.protos.generated import commands_pb2
-from src.core.protos.generated import commands_pb2_grpc
-
-class UserCommandServicer(commands_pb2_grpc.UserCommandServiceServicer):
-    def RegisterUser(self, request, context):
-        try:
-            
-            # user = UserRegistrationService.RegisterUser(request.email, request.username, request.password)
-
-            return commands_pb2.RegisterUserResponse(
-                user_id=str(5)
-            )
-            
-        except ValueError as e:
-            # Преобразуем доменные ошибки в gRPC-статус
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
-        except Exception as e:
-            context.abort(grpc.StatusCode.INTERNAL, f"Server error: {str(e)}")
-
-
-def serve_grpc():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    commands_pb2_grpc.add_UserCommandServiceServicer_to_server(
-        UserCommandServicer(), server)
-    server.add_insecure_port('[::]:50051')
-    server.start()
-    server.wait_for_termination()
+from src.infrastructure.grpc.server import serve_grpc
 
 
 
-
+# import asyncio
+# from src.applications.use_cases.register_user import RegisterUserUseCase
+# from src.infrastructure.database.repositories.user_repository import PostgresUserRepository
+# from src.domain.users.services import UserRegistrationService
+# import random 
 # async def main():
-#     user_repo = PostgresUserRepository()
-#     user_service = UserService(user_repo)
 
-#     try:
-#         user = await user_service.register_user(
-#             email="test@example.com",
-#             hash_password="secure123",
-#             username="testuser"
-#         )
-#         print(f"User registered: {user}")
-#     except ValueError as e:
-#         print(f"Error: {e}")
+#     register_use_case = RegisterUserUseCase(
+#         user_repo=PostgresUserRepository(),
+#         # event_publisher=Kafka(),
+#         registration_service=UserRegistrationService
+#     )
 
+#     request = [f"email@email.com{random.randint(1, 10**10)}", "fdalkfdsajlkfdsa", f"{random.randint(1, 10**10)}"]
+
+#     user_id = await register_use_case.execute(
+#         email=request[0],
+#         password=request[1],
+#         username=request[2]
+#     )
 
 # if __name__ == "__main__":
 #     asyncio.run(main())

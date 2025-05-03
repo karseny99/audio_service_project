@@ -4,5 +4,8 @@ class DomainError(Exception):
 class EmailAlreadyExistsError(DomainError):
     pass
 
+class UsernameAlreadyExistsError(DomainError):
+    pass
+
 class ValueObjectException(ValueError):
     pass

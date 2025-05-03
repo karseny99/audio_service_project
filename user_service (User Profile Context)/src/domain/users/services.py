@@ -25,6 +25,7 @@ class UserRegistrationService:
         username_vo = Username(username)
 
         return User(
+            id=None,
             email=email_vo,
             password_hash=password_hash,
             username=username_vo
