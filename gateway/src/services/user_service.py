@@ -1,6 +1,6 @@
 # gateway/services/user_service.py
 from grpc import RpcError, StatusCode
-from src.core.dependencies.grpc_clients import get_user_channel
+from src.core.dependencies.grpc_clients import get_user_command_stub
 from src.protos.user_context.generated import commands_pb2, commands_pb2_grpc
 
 def register_user(username: str, email: str, password: str) -> str:
@@ -20,10 +20,7 @@ def register_user(username: str, email: str, password: str) -> str:
         RuntimeError: Для всех остальных ошибок gRPC
     """
     # 1. Получаем singleton-канал
-    channel = get_user_channel()
-    
-    # 2. Инициализируем stub (создаётся при каждом вызове - это дёшево)
-    stub = commands_pb2_grpc.UserCommandServiceStub(channel)
+    stub = get_user_command_stub()
     
     # 3. Формируем запрос
     request = commands_pb2.RegisterUserRequest(

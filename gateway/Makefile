@@ -17,5 +17,8 @@ generate:
 install:
 	poetry add grpcio grpcio-tools
 
+run:
+	poetry run python3 main.py
+
 clean:
 	rm -rf ./src/protos/user_context/generated/*

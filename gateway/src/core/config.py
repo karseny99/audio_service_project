@@ -1,10 +1,16 @@
 from pydantic_settings import BaseSettings
 import os
 from typing import Optional
+import logging
 
 class Settings(BaseSettings):
     BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     ENV: str = "local"  # local/stage/prod
+
+    # Logger
+    LOG_LEVEL: int = logging.DEBUG # INFO
+    LOKI_URL: str = "http://loki:3100"
+    
     
     # gRPC
     GRPC_HOST: str = 'localhost' # all interfaces

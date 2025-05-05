@@ -18,6 +18,18 @@
         channel = get_user_channel()
         return commands_pb2_grpc.UserCommandServiceStub(channel)
 
+    from fastapi import FastAPI
+    from core.middleware.logging import log_requests
+    from core.logger import setup_logging
+
+    app = FastAPI()
+    setup_logging(settings.LOKI_URL)  # LOKI_URL из env-переменных
+
+    # Подключение middleware
+    app.middleware("http")(log_requests)
+
+
+        
     @router.post("/register")
     async def register(
         stub: UserCommandServiceStub = Depends(get_user_stub)

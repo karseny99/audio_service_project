@@ -1,3 +1,4 @@
+drop schema if exists public;
 CREATE SCHEMA user_profile;
 CREATE SCHEMA playlist;
 CREATE SCHEMA listening_history;
