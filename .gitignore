@@ -175,5 +175,5 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
-user_service (User Profile Context)/core/protos/generated/*
-gateway/src/core/protos/user_context/generated/*
+user_service (User Profile Context)/src/core/protos/generated/*
+gateway/src/protos/user_context/generated/*
