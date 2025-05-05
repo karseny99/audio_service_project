@@ -1,39 +1,33 @@
-from src.infrastructure.grpc.server import serve_grpc
-
-
-
-# import asyncio
-# from src.applications.use_cases.register_user import RegisterUserUseCase
-# from src.infrastructure.database.repositories.user_repository import PostgresUserRepository
-# from src.domain.users.services import UserRegistrationService
-# import random 
-# async def main():
-
-#     register_use_case = RegisterUserUseCase(
-#         user_repo=PostgresUserRepository(),
-#         # event_publisher=Kafka(),
-#         registration_service=UserRegistrationService
-#     )
-
-#     request = [f"email@email.com{random.randint(1, 10**10)}", "fdalkfdsajlkfdsa", f"{random.randint(1, 10**10)}"]
-
-#     user_id = await register_use_case.execute(
-#         email=request[0],
-#         password=request[1],
-#         username=request[2]
-#     )
-
-# if __name__ == "__main__":
-#     asyncio.run(main())
-
 import asyncio
-# from kafka.consumer import app
-# from grpc_server import serve_grpc
+from src.infrastructure.grpc.server import serve_grpc
+from src.core.di import Container
+from src.core.logger import logger
+from functools import wraps
 
+def with_kafka_cleanup(main_func):
+    @wraps(main_func)
+    async def wrapper():
+        container = Container()
+        try:
+            await main_func()
+        finally:
+            publisher = container.kafka_publisher()
+            await publisher.disconnect()
+            logger.info("Kafka publisher disconnected")
+    return wrapper
+
+
+@with_kafka_cleanup
 async def main():
+    # Dependency injection before start up
+    container = Container()
+    container.wire(modules=["src.infrastructure.grpc.server"])
+
+    await container.kafka_publisher().connect()
+
     await asyncio.gather(
         serve_grpc(),  # gRPC-сервер
         # app.run()      # Kafka-консьюмер
     )
 
-asyncio.run(serve_grpc())
+asyncio.run(main())
