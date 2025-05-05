@@ -1,19 +1,21 @@
-# Helper for protobuf ↔ Python-Domainfrom datetime import datetime
-from core.protobuf.generated import user_events_pb2
+from abc import abstractmethod
+from typing import Protocol, runtime_checkable
+from google.protobuf.message import Message
 
-def serialize_user_registered(user_id: str, email: str) -> bytes:
-    proto_msg = user_events_pb2.UserRegistered(
-        user_id=user_id,
-        email=email,
-        timestamp=int(datetime.now().timestamp())
-    )
-    return proto_msg.SerializeToString()
+@runtime_checkable
+class Serializer(Protocol):
+    @abstractmethod
+    def serialize(self, event) -> bytes:
+        pass
 
-def deserialize_user_registered(data: bytes) -> dict:
-    proto_msg = user_events_pb2.UserRegistered()
-    proto_msg.ParseFromString(data)
-    return {
-        "user_id": proto_msg.user_id,
-        "email": proto_msg.email,
-        "timestamp": proto_msg.timestamp
-    }
+
+class ProtobufSerializer:
+    def serialize(self, event) -> bytes:
+        if not hasattr(event, 'to_proto'):
+            raise ValueError("Event cannot be converted to protobuf")
+        
+        proto_message = event.to_proto()
+        if not isinstance(proto_message, Message):
+            raise ValueError("to_proto() must return a protobuf message")
+        
+        return proto_message.SerializeToString()

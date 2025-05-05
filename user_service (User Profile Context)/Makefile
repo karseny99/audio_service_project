@@ -8,6 +8,13 @@ generate:
 		--grpc_python_out=./src/core/protos/generated \
 		--pyi_out=./src/core/protos/generated \
 		./src/core/protos/commands.proto
+
+	poetry run python3 -m grpc_tools.protoc \
+		-I./src/core/protos \
+		--python_out=./src/core/protos/generated \
+		--grpc_python_out=./src/core/protos/generated \
+		--pyi_out=./src/core/protos/generated \
+		./src/core/protos/events.proto
 	
 	# Автоматическое исправление импортов
 	sed -i 's/^import commands_pb2/from src.core.protos.generated import commands_pb2/' src/core/protos/generated/commands_pb2_grpc.py
@@ -18,5 +25,9 @@ generate:
 	
 install:
 	poetry add grpcio grpcio-tools
+
+run:
+	poetry run python3 main.py
+
 clean:
 	rm -rf src/core/protos/generated/*

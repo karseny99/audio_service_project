@@ -1,35 +1,31 @@
-# from dataclasses import dataclass
-# from datetime import datetime
-# from uuid import uuid4
-# from src.core.protobuf.generated.user_events_pb2 import UserRegistered as UserRegisteredProto
+from dataclasses import dataclass
+from google.protobuf.message import Message
 
-# @dataclass(frozen=True)
-# class UserRegistered:
-#     user_id: int
-#     email: str
-#     username: str
-#     occurred_on: datetime = None
-#     event_id: str = None
+class UserEvent:
+    """Базовый класс для событий"""
+    def to_proto(self) -> Message:
+        raise NotImplementedError
+
+@dataclass
+class UserRegistered(UserEvent):
+    user_id: str
+    email: str
+    username: str
+
+    def to_proto(self) -> Message:
+        from src.core.protos.generated.events_pb2 import UserRegistered as UserRegisteredProto
+        
+        return UserRegisteredProto(
+            user_id=self.user_id,
+        )
     
-#     def __post_init__(self):
-#         self.event_id = self.event_id or str(uuid4())
-#         self.occurred_on = self.occurred_on or datetime.utcnow()
-    
-#     def to_protobuf(self) -> UserRegisteredProto:
-#         proto = UserRegisteredProto()
-#         proto.event_id = self.event_id
-#         proto.user_id = str(self.user_id)
-#         proto.email = self.email
-#         proto.username = self.username
-#         proto.occurred_on.FromDatetime(self.occurred_on)
-#         return proto
-    
-#     @classmethod
-#     def from_protobuf(cls, proto: UserRegisteredProto):
-#         return cls(
-#             event_id=proto.event_id,
-#             user_id=proto.user_id,
-#             email=proto.email,
-#             username=proto.username,
-#             occurred_on=proto.occurred_on.ToDatetime()
-#         )
+@dataclass 
+class UserDeleted(UserEvent):
+    user_id: str
+
+    def to_proto(self) -> Message:
+        from src.core.protos.generated.events_pb2 import UserDeleted as UserDeletedProto
+        
+        return UserDeletedProto(
+            user_id=self.user_id,
+        )
