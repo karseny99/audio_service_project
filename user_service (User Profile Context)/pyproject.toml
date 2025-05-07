@@ -3,6 +3,10 @@ name = "user_service (user profile context)"
 version = "0.1.0"
 description = ""
 authors = ["karseny99 <arseny.karimov@gmail.com>"]
+packages = [
+    { include = "core", from = "src" },
+    { include = "domain", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
