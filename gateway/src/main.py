@@ -1,19 +1,37 @@
+# src/main.py
+
 from fastapi import FastAPI
-from api.v1 import users
+from contextlib import asynccontextmanager
+from api.v1.users import router as users_router
 from core.container import Container
-import asyncio
+from core.kafka_producer import get_producer
 
-app = FastAPI()
 container = Container()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Этот контекст запускается один раз при старте и
+    завершается при остановке приложения.
+    """
+    # --- Startup ---
+    # Создаём экземпляр продюсера (lazy — создастся при первом get_producer())
+    # Можно обернуть в try/except, если нужно пропускать ошибку соединения
+    try:
+        get_producer()
+    except Exception:
+        pass
+
+    yield  # здесь приложение начинает обрабатывать запросы
+
+    # --- Shutdown ---
+    # Закрываем соединение у продюсера
+    try:
+        get_producer().close()
+    except Exception:
+        pass
+
+
+app = FastAPI(lifespan=lifespan)
 app.container = container
-app.include_router(users.router)
-
-@app.on_event("startup")
-async def startup_event():
-    producer = container.kafka_producer()
-    await producer.start()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    producer = container.kafka_producer()
-    await producer.stop()
+app.include_router(users_router)

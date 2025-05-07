@@ -6,6 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="54cc931f-c247-4ce8-988f-53523c714890" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gateway/poetry.lock" beforeDir="false" afterPath="$PROJECT_DIR$/gateway/poetry.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gateway/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/gateway/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gateway/src/core/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/gateway/src/core/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gateway/src/core/kafka_producer.py" beforeDir="false" afterPath="$PROJECT_DIR$/gateway/src/core/kafka_producer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/user_service (User Profile Context)/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/user_service (User Profile Context)/pyproject.toml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,7 +52,7 @@
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "dev",
+    "git-widget-placeholder": "dev__gateway",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "last_opened_file_path": "/home/vadim/audio_service_project/user_service/src/infrastructure",
