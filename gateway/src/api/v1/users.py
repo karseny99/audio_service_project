@@ -1,28 +1,27 @@
 from fastapi import APIRouter, Depends, HTTPException
 from dependency_injector.wiring import inject, Provide
+from grpc import RpcError
+
 from core.container import Container
-from core.kafka_producer import KafkaProducer
+from grpc_clients.user_client import register_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/register")
 @inject
-async def register_user(
+async def register_user_endpoint(
     username: str,
     email: str,
     password: str,
-    producer: KafkaProducer = Depends(Provide[Container.kafka_producer])
+    stub=Depends(Provide[Container.user_stub]),
 ):
     try:
-        event = {
-            "event_type": "user_registered",
-            "data": {
-                "username": username,
-                "email": email,
-                "password": password
-            }
-        }
-        await producer.send("user_events", event)
-        return {"status": "event_published"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # register_user использует cached stub
+        user_id = await register_user(username, email, password)
+        return {"status": "created", "user_id": user_id}
+    except RpcError as e:
+        # сюда попадут INVALID_ARGUMENT / ALREADY_EXISTS и т.д.
+        code = e.code()
+        if code.name in ("INVALID_ARGUMENT", "ALREADY_EXISTS"):
+            raise HTTPException(status_code=400, detail=e.details())
+        raise HTTPException(status_code=502, detail="UserService unavailable")

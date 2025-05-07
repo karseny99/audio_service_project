@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     GRPC_HOST: str = 'localhost'
     GRPC_PORT: int = 50051
 
+    USER_SERVICE_GRPC_HOST: str = "user_service"
+    USER_SERVICE_GRPC_PORT: int = 50051
+
+    @property
+    def user_service_grpc_url(self) -> str:
+        return f"{self.USER_SERVICE_GRPC_HOST}:{self.USER_SERVICE_GRPC_PORT}"
+
     # Kafka (дефолт на localhost:9092)
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
     KAFKA_SECURITY_PROTOCOL: Optional[str] = None

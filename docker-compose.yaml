@@ -12,6 +12,12 @@ services:
       - '8000:8000'
     depends_on:
       - kafka
+  user_service:
+    build: "./user_service (User Profile Context)"
+    ports: [ "50051:50051" ]
+    depends_on:
+      kafka:
+        condition: service_healthy
 
   postgres:
     image: postgres:17-alpine
