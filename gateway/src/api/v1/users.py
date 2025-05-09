@@ -1,47 +1,44 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from dependency_injector.wiring import inject, Provide
-import grpc
-
-from src.core.container import Container
-from src.services.user_service import register_user
+from pydantic import BaseModel
+from src.services.user_service import change_password
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
+@router.post(
+    "/change-password",
+    summary="Change own password",
+    status_code=status.HTTP_200_OK
+)
 @inject
-async def register_user_endpoint(
-    username: str,
-    email: str,
-    password: str,
-    stub=Depends(Provide[Container.user_stub]),  # если нужен stub из DI
+async def change_password_endpoint(
+        payload: ChangePasswordRequest,
+        request: Request,  # от AuthMiddleware в state.user_id
 ):
+    user_id: str = request.state.user_id
     try:
-        user_id = register_user(username, email, password)
-        return {"status": "created", "user_id": user_id}
-
-    except ValueError as e:
-        # сюда упадут ошибки валидации (INVALID_ARGUMENT) или ALREADY_EXISTS
-        detail = str(e)
-        if "validation" in detail.lower() or "ошибка валидации" in detail.lower():
-            http_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-        else:
-            http_code = status.HTTP_409_CONFLICT
-        raise HTTPException(status_code=http_code, detail=detail)
-
-    except grpc.RpcError as e:
-        # любые необработанные gRPC-ошибки
-        code = e.code()
-        if code == grpc.StatusCode.UNAVAILABLE:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="User service is unavailable"
-            )
-        # прочие gRPC ошибки
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"gRPC error: {code.name}"
+        change_password(
+            user_id=user_id,
+            old_password=payload.old_password,
+            new_password=payload.new_password
         )
-
-    except Exception as e:
-        # ловим всё остальное
-        raise HTTPException(status_code=500, detail="Unexpected error")
+        return {"status": "password_changed"}
+    except ValueError as e:
+        # сюда попадут Invalid creds или Not found
+        detail = str(e)
+        code = status.HTTP_400_BAD_REQUEST
+        if "не найден" in detail.lower():
+            code = status.HTTP_404_NOT_FOUND
+        raise HTTPException(status_code=code, detail=detail)
+    except RuntimeError as e:
+        # сервис недоступен
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e)
+        )
