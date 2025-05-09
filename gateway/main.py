@@ -41,10 +41,25 @@
 from src.services.user_service import register_user
 import random
 
+
+from fastapi import FastAPI
+from src.core.container import Container
+from src.api.v1.users import router as users_router
+import uvicorn
+
+app = FastAPI(title="API Gateway")
+container = Container()
+app.container = container
+app.include_router(users_router)
+
+
 if __name__ == "__main__":
-    user_id = register_user(
-        username=f"{random.randint(1, 10**10)}",
-        email=f"john@example.com{random.randint(1, 10**10)}",
-        password="secure123"
-    )
-    print(f"Registered user ID: {user_id}")
+    uvicorn.run("main:app", port=8000, log_level="info")
+
+# if __name__ == "__main__":
+#     user_id = register_user(
+#         username=f"{random.randint(1, 10**10)}",
+#         email=f"john@example.com{random.randint(1, 10**10)}",
+#         password="secure123"
+#     )
+#     print(f"Registered user ID: {user_id}")
