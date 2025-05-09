@@ -2,37 +2,34 @@ import re
 import bcrypt
 from dataclasses import dataclass
 from src.core.exceptions import ValueObjectException
+from passlib.hash import bcrypt
+
+from dataclasses import dataclass, field
+from passlib.hash import bcrypt
+from typing import Any
 
 @dataclass(frozen=True)
 class PasswordHash:
-    value: str  # Stores the hashed password
-    
-    # BCrypt pattern: starts with $2a$, $2b$, $2y$ followed by cost factor and hash
-    _BCRYPT_PATTERN = re.compile(r'^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$')
-    
-    def __post_init__(self):
-        """
-            Validate that the value is a proper bcrypt hash
-        """
-        if not self._is_valid_bcrypt_hash(self.value):
-            raise ValueObjectException("Invalid bcrypt hash format")
-       
-    def verify(self, raw_password: str) -> bool:
-        """
-            Verify if raw password matches this hash
-        """
-        try:
-            return bcrypt.checkpw(
-                raw_password.encode('utf-8'),
-                self.value.encode('utf-8')
-            )
-        except (ValueError, TypeError):
-            return False
-    
-    @staticmethod
-    def _is_valid_bcrypt_hash(hash_str: str) -> bool:
-        """
-            Check if string matches bcrypt format
-        """
-        return True
-        return bool(PasswordHash._BCRYPT_PATTERN.match(hash_str))
+    """
+    VO для пароля: сразу хэширует сырой пароль или
+    принимает уже готовый хэш (через флаг already_hashed).
+    """
+    _hash: str = field(init=False, repr=False)
+
+    def __init__(self, raw_or_hashed: str, already_hashed: bool = False) -> None:
+        if already_hashed:
+            h = raw_or_hashed
+        else:
+            h = bcrypt.hash(raw_or_hashed)
+        # обходим frozen инициализацию
+        object.__setattr__(self, "_hash", h)
+
+    @property
+    def value(self) -> str:
+        return self._hash
+
+    def verify(self, raw: str) -> bool:
+        return bcrypt.verify(raw, self._hash)
+
+    def __str__(self) -> str:
+        return self._hash
