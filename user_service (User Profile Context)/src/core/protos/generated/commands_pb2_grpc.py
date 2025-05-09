@@ -5,7 +5,7 @@ import warnings
 
 from src.core.protos.generated import commands_pb2 as commands__pb2
 
-GRPC_GENERATED_VERSION = '1.71.0'
+GRPC_GENERATED_VERSION = '1.72.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -39,6 +39,16 @@ class UserCommandServiceStub(object):
                 request_serializer=commands__pb2.RegisterUserRequest.SerializeToString,
                 response_deserializer=commands__pb2.RegisterUserResponse.FromString,
                 _registered_method=True)
+        self.AuthenticateUser = channel.unary_unary(
+                '/UserCommandService/AuthenticateUser',
+                request_serializer=commands__pb2.AuthenticateUserRequest.SerializeToString,
+                response_deserializer=commands__pb2.AuthenticateUserResponse.FromString,
+                _registered_method=True)
+        self.ChangePassword = channel.unary_unary(
+                '/UserCommandService/ChangePassword',
+                request_serializer=commands__pb2.ChangePasswordRequest.SerializeToString,
+                response_deserializer=commands__pb2.ChangePasswordResponse.FromString,
+                _registered_method=True)
 
 
 class UserCommandServiceServicer(object):
@@ -51,6 +61,18 @@ class UserCommandServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def AuthenticateUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ChangePassword(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_UserCommandServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -58,6 +80,16 @@ def add_UserCommandServiceServicer_to_server(servicer, server):
                     servicer.RegisterUser,
                     request_deserializer=commands__pb2.RegisterUserRequest.FromString,
                     response_serializer=commands__pb2.RegisterUserResponse.SerializeToString,
+            ),
+            'AuthenticateUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.AuthenticateUser,
+                    request_deserializer=commands__pb2.AuthenticateUserRequest.FromString,
+                    response_serializer=commands__pb2.AuthenticateUserResponse.SerializeToString,
+            ),
+            'ChangePassword': grpc.unary_unary_rpc_method_handler(
+                    servicer.ChangePassword,
+                    request_deserializer=commands__pb2.ChangePasswordRequest.FromString,
+                    response_serializer=commands__pb2.ChangePasswordResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -87,6 +119,60 @@ class UserCommandService(object):
             '/UserCommandService/RegisterUser',
             commands__pb2.RegisterUserRequest.SerializeToString,
             commands__pb2.RegisterUserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AuthenticateUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/UserCommandService/AuthenticateUser',
+            commands__pb2.AuthenticateUserRequest.SerializeToString,
+            commands__pb2.AuthenticateUserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ChangePassword(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/UserCommandService/ChangePassword',
+            commands__pb2.ChangePasswordRequest.SerializeToString,
+            commands__pb2.ChangePasswordResponse.FromString,
             options,
             channel_credentials,
             insecure,

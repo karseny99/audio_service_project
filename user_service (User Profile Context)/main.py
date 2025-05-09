@@ -30,4 +30,6 @@ async def main():
         # app.run()      # Kafka-консьюмер
     )
 
+container = Container()
+container.wire(modules=["src.infrastructure.grpc.server"])
 asyncio.run(main())

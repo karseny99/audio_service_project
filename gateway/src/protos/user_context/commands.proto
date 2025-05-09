@@ -1,9 +1,12 @@
 syntax = "proto3";
 
-message ChangePasswordCommand {
-    string user_id = 1;
-    string new_password = 2;
+message ChangePasswordRequest {
+  string user_id       = 1;
+  string old_password  = 2;
+  string new_password  = 3;
 }
+
+message ChangePasswordResponse { }
 
 message RegisterUserRequest {
     string username = 1;
@@ -15,7 +18,18 @@ message RegisterUserResponse {
   string user_id = 1;
 }
 
+message AuthenticateUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthenticateUserResponse {
+  string user_id = 1;
+}
+
 service UserCommandService {
     // rpc ChangePassword (ChangePasswordCommand) returns (google.protobuf.Empty);
     rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
+    rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse) {}
+    rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
 }

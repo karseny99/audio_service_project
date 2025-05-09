@@ -9,7 +9,9 @@ from src.core.exceptions import (
     EmailAlreadyExistsError,
     UsernameAlreadyExistsError
 )
-
+from src.domain.users.value_objects.password_hash import PasswordHash
+from src.infrastructure.database.repositories.user_repository import PostgresUserRepository
+from grpc import StatusCode
 from dependency_injector.wiring import inject, Provide
 from concurrent import futures
 import grpc
@@ -21,9 +23,11 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
     @inject
     def __init__(
         self,
-        register_use_case: RegisterUserUseCase = Provide[Container.register_use_case]
+        register_use_case: RegisterUserUseCase = Provide[Container.register_use_case],
+        user_repo: PostgresUserRepository = Provide[Container.user_repository],
     ):
         self.register_use_case = register_use_case
+        self._repo = user_repo
     
     async def RegisterUser(self, request, context: ServicerContext):
         try:
@@ -41,7 +45,6 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
         except Exception as e:
             await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {str(e)}")
 
-
     async def RegisterUser(self, request, context):
         try:
             user_id = await self.register_use_case.execute(
@@ -57,6 +60,39 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
             await context.abort(grpc.StatusCode.ALREADY_EXISTS, str(e)) 
         except Exception as e:
             await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {str(e)}")
+
+    async def AuthenticateUser(self, request, context):
+        repo = PostgresUserRepository()
+        user = await repo.get_by_username(request.username)
+        if user is None:
+            await context.abort(StatusCode.NOT_FOUND, "User not found")
+        # user.password_hash – это VO PasswordHash, у него метод verify()
+        if not user.password_hash.verify(request.password):
+            await context.abort(StatusCode.INVALID_ARGUMENT, "Invalid credentials")
+        return commands_pb2.AuthenticateUserResponse(user_id=str(user.id))
+
+    async def ChangePassword(self, request, context):
+        try:
+            user = await self._repo.get_by_id(int(request.user_id))
+            if user is None:
+                await context.abort(StatusCode.NOT_FOUND, "User not found")
+
+            if not user.password_hash.verify(request.old_password):
+                await context.abort(StatusCode.INVALID_ARGUMENT, "Old password incorrect")
+
+            user.password_hash = PasswordHash(request.new_password)
+            updated = await self._repo.update(user)
+            if updated is None:
+                await context.abort(StatusCode.INTERNAL, "Failed to update password")
+
+            return commands_pb2.ChangePasswordResponse()
+
+        except ValueError as ve:
+            # в domain layer могли быть ошибки VO
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(ve))
+        except Exception as ex:
+            logger.exception("Unexpected error in ChangePassword")
+            await context.abort(StatusCode.INTERNAL, "Internal server error")
 
 
 async def serve_grpc():
