@@ -6,11 +6,32 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: 1
       POSTGRES_DB: audio_db
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./ddl.sql:/docker-entrypoint-initdb.d/ddl.sql 
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U user -d audio_db"]
+      interval: 5s
+      retries: 5
+
+  db-init:
+    image: postgres:17-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: "1"
+    volumes:
+      - ./ddl.sql:/ddl.sql:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        echo "Applying DDL to audio_db…"
+        psql -h postgres -U user -d audio_db -f /ddl.sql
+        echo "DDL applied."
+    # после выполнения контейнер остановится
 
   # Zookeeper (обязателен для Kafka)
   zookeeper:
