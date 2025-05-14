@@ -8,7 +8,13 @@ class Settings(BaseSettings):
     
     # gRPC server
     GRPC_HOST: str = '[::]' # all interfaces
-    GRPC_PORT: str = '50051'
+    GRPC_PORT: str = '50052'
+
+    # gRPC client
+    GRPC_TRACK_SERVICE_HOST: str = 'localhost'
+    GRPC_TRACK_SERVICE_PORT: str = '50053'
+    GRPC_TIMEOUT: int = 5 # seconds
+    
 
     # Redis
     # REDIS_HOST: str
@@ -26,7 +32,7 @@ class Settings(BaseSettings):
     # Kafka
     KAFKA_BOOTSTRAP_SERVERS: str = 'localhost:29092'
     # KAFKA_BOOTSTRAP_SERVERS: str = 'kafka:9092' # in docker network
-    KAFKA_USER_CONTEXT_TOPIC: str = 'user-topic'
+    KAFKA_USER_CONTEXT_TOPIC: str = 'playlist-topic'
     # KAFKA_SECURITY_PROTOCOL: Optional[str] = None
     # KAFKA_SASL_MECHANISM: Optional[str] = None
     # KAFKA_SASL_USERNAME: Optional[str] = None
@@ -70,9 +76,15 @@ class Settings(BaseSettings):
 
     def get_grpc_url(self) -> str:
         """
-            Returns grpc url 
+            Returns its grpc server's url 
         """
-        grpc_url = f"{self.GRPC_HOST}:{self.GRPC_PORT}"
-        return grpc_url
+        return f"{self.GRPC_HOST}:{self.GRPC_PORT}"
+    
+
+    def get_grpc_music_service_url(self) -> str:
+        '''
+            Returns grpc url of music service
+        '''
+        return f"{self.GRPC_TRACK_SERVICE_HOST}:{self.GRPC_TRACK_SERVICE_PORT}"
 
 settings = Settings()
