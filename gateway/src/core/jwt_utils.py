@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from pydantic_settings import BaseSettings
 
 class JWTSettings(BaseSettings):
-    SECRET_KEY: str = "supersecret"
+    SECRET_KEY: str = "supersecrett"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10
 
