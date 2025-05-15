@@ -3,6 +3,7 @@ from dependency_injector.wiring import inject, Provide
 from src.core.jwt_utils import create_access_token, verify_token
 from src.core.container import Container
 from src.services.user_service import register_user, authenticate_user
+from src.schemas.user import RegisterUserRequest, LoginUserRequest
 import grpc
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -10,13 +11,11 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 @inject
 async def register_user_endpoint(
-    username: str,
-    email: str,
-    password: str,
+    req: RegisterUserRequest,
     stub=Depends(Provide[Container.user_stub]),  # если нужен stub из DI
 ):
     try:
-        user_id = register_user(username, email, password)
+        user_id = register_user(req.username, req.email, req.password)
         return {"status": "created", "user_id": user_id}
 
     except ValueError as e:
@@ -47,9 +46,9 @@ async def register_user_endpoint(
         raise HTTPException(status_code=500, detail="Unexpected error")
 
 @router.post("/login", summary="Authenticate user and return JWT")
-def login(username: str, password: str):
+def login(req: LoginUserRequest):
     try:
-        user_id = authenticate_user(username, password)
+        user_id = authenticate_user(req.username, req.password)
         token = create_access_token(user_id)
         return {"access_token": token, "token_type": "bearer"}
     except ValueError as e:

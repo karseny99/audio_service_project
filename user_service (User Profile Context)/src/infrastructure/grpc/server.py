@@ -9,6 +9,7 @@ from src.core.exceptions import (
     EmailAlreadyExistsError,
     UsernameAlreadyExistsError
 )
+from google.protobuf.empty_pb2 import Empty
 from src.domain.users.value_objects.password_hash import PasswordHash
 from src.infrastructure.database.repositories.user_repository import PostgresUserRepository
 from grpc import StatusCode
@@ -85,7 +86,7 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
             if updated is None:
                 await context.abort(StatusCode.INTERNAL, "Failed to update password")
 
-            return commands_pb2.ChangePasswordResponse()
+            return Empty()
 
         except ValueError as ve:
             # в domain layer могли быть ошибки VO

@@ -2,14 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from dependency_injector.wiring import inject, Provide
 from pydantic import BaseModel
 from src.services.user_service import change_password
+from src.schemas.user import ChangePasswordRequest
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
-
-
-class ChangePasswordRequest(BaseModel):
-    old_password: str
-    new_password: str
-
 
 @router.post(
     "/change-password",
