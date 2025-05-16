@@ -23,7 +23,7 @@ async def main():
     container = Container()
     container.wire(modules=["src.infrastructure.grpc.server"])
 
-    await container.kafka_publisher().connect()
+    await container.kafka_publisher_register_uc().connect()
 
     await asyncio.gather(
         serve_grpc(),  # gRPC-сервер

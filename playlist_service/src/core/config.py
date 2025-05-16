@@ -30,9 +30,10 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = 'audio_db'
     
     # Kafka
+    EVENT_HEADER: str = 'event-type'
     KAFKA_BOOTSTRAP_SERVERS: str = 'localhost:29092'
     # KAFKA_BOOTSTRAP_SERVERS: str = 'kafka:9092' # in docker network
-    KAFKA_USER_CONTEXT_TOPIC: str = 'playlist-topic'
+    KAFKA_PLAYLIST_CONTEXT_TOPIC: str = 'playlist-topic'
     # KAFKA_SECURITY_PROTOCOL: Optional[str] = None
     # KAFKA_SASL_MECHANISM: Optional[str] = None
     # KAFKA_SASL_USERNAME: Optional[str] = None
@@ -80,7 +81,6 @@ class Settings(BaseSettings):
         """
         return f"{self.GRPC_HOST}:{self.GRPC_PORT}"
     
-
     def get_grpc_music_service_url(self) -> str:
         '''
             Returns grpc url of music service

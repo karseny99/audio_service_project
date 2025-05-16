@@ -1,9 +1,12 @@
 from faststream.kafka import KafkaBroker
+from contextlib import asynccontextmanager
 from google.protobuf.message import Message
+import asyncio
+
 from src.core.config import settings
 from src.core.logger import logger
-import asyncio
-from contextlib import asynccontextmanager
+
+from src.domain.events.events import PlaylistEvent
 
 class KafkaEventPublisher:
     def __init__(self, broker: KafkaBroker):
@@ -44,14 +47,16 @@ class KafkaEventPublisher:
         finally:
             pass  # Не закрываем соединение явно, чтобы переиспользовать
 
-    async def publish(self, event: Message, topic: str, key: str | None = None):
+    async def publish(self, event: PlaylistEvent, topic: str, key: str | None = None):
         """Публикация сообщения с гарантированным подключением"""
         try:
-            async with self.get_producer() as producer:
-                message = event.SerializeToString()
+            async with self.get_producer() as producer:               
+                headers = event.get_headers()
+                message = event.to_proto().SerializeToString()
                 await producer.publish(
                     message=message,
                     topic=topic,
+                    headers=headers,
                     key=key.encode() if key else None,
                 )
                 logger.debug(f"Successfully published to {topic}")
@@ -61,4 +66,4 @@ class KafkaEventPublisher:
 
     @property
     def destination(self) -> str:
-        return settings.KAFKA_USER_CONTEXT_TOPIC
+        return settings.KAFKA_PLAYLIST_CONTEXT_TOPIC

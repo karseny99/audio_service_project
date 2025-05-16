@@ -1,31 +1,19 @@
-# from dataclasses import dataclass
-# from google.protobuf.message import Message
+from dataclasses import dataclass
+from google.protobuf.message import Message
+from src.domain.playlists.value_objects import UserId
 
-# class UserEvent:
-#     """Базовый класс для событий"""
-#     def to_proto(self) -> Message:
-#         raise NotImplementedError
 
-# @dataclass
-# class UserRegistered(UserEvent):
-#     user_id: str
-#     email: str
-#     username: str
+class PlaylistEvent:
+    """
+        Base class for playlist events
+    """
+    def to_proto(self) -> Message:
+        raise NotImplementedError
 
-#     def to_proto(self) -> Message:
-#         from src.core.protos.generated.events_pb2 import UserRegistered as UserRegisteredProto
-        
-#         return UserRegisteredProto(
-#             user_id=self.user_id,
-#         )
-    
-# @dataclass 
-# class UserDeleted(UserEvent):
-#     user_id: str
+    def get_headers(self) -> dict:
+        return {'event-type': self.__class__.__name__}
 
-#     def to_proto(self) -> Message:
-#         from src.core.protos.generated.events_pb2 import UserDeleted as UserDeletedProto
-        
-#         return UserDeletedProto(
-#             user_id=self.user_id,
-#         )
+
+@dataclass
+class UserDeleted:
+    user_id: int

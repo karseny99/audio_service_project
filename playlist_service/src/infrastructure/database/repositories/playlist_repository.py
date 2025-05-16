@@ -1,5 +1,6 @@
 from typing import Optional, List
 from sqlalchemy import select, delete, update, func
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from src.core.config import settings
@@ -103,14 +104,19 @@ class PostgresPlaylistRepository(PlaylistRepository):
 
     @ConnectionDecorator(isolation_level="READ COMMITTED")
     async def get_user_playlists(self, user_id: int, session: Optional[AsyncSession] = None) -> List[Playlist]:
-        stmt = select(PlaylistORM).join(
-            PlaylistUserORM,
-            PlaylistUserORM.playlist_id == PlaylistORM.playlist_id
-        ).where(PlaylistUserORM.user_id == user_id)
-        
+        stmt = (
+            select(PlaylistORM)
+            .join(PlaylistUserORM)
+            .where(PlaylistUserORM.user_id == user_id)
+            .options(
+                joinedload(PlaylistORM.tracks),
+                joinedload(PlaylistORM.users)
+            )
+        )
+    
         result = await session.execute(stmt)
-        return [row[0].to_domain() for row in result.all()]
-
+        return [playlist.to_domain() for playlist in result.unique().scalars()]
+    
     @ConnectionDecorator(isolation_level="READ COMMITTED")
     async def get_playlist_tracks(self, playlist_id: int, session: Optional[AsyncSession] = None) -> List[PlaylistTrack]:
         stmt = select(PlaylistTrackORM).where(
@@ -118,7 +124,7 @@ class PostgresPlaylistRepository(PlaylistRepository):
         ).order_by(PlaylistTrackORM.position)
         
         result = await session.execute(stmt)
-        return [row[0].to_domain() for row in result.all()]
+        return [track.to_domain() for track in result.scalars()]
 
     @ConnectionDecorator()
     async def delete_playlist(self, playlist_id: int, session: Optional[AsyncSession] = None) -> bool:
@@ -127,3 +133,56 @@ class PostgresPlaylistRepository(PlaylistRepository):
         ).returning(PlaylistORM.playlist_id)
         result = await session.execute(stmt)
         return result.scalar_one_or_none() is not None
+
+    @ConnectionDecorator(isolation_level="READ COMMITTED")
+    async def get_playlists_with_track(self, track_id: int, session: Optional[AsyncSession] = None) -> List[Playlist]:
+        stmt = select(PlaylistORM).join(
+            PlaylistTrackORM,
+            PlaylistTrackORM.playlist_id == PlaylistORM.playlist_id
+        ).where(PlaylistTrackORM.track_id == track_id)
+        
+        result = await session.execute(stmt)
+        playlists = [playlist.to_domain() for playlist in result.scalars()]
+        
+        # Дополнительная загрузка данных
+        for playlist in playlists:
+            await session.refresh(playlist, ['tracks', 'users'])
+            
+        return playlists
+
+    @ConnectionDecorator()
+    async def remove_track_and_reorder(self, playlist_id: int, track_id: int, session: Optional[AsyncSession] = None) -> None:
+        # 1. Удаляем трек
+        stmt = delete(PlaylistTrackORM).where(
+            (PlaylistTrackORM.playlist_id == playlist_id) &
+            (PlaylistTrackORM.track_id == track_id)
+        )
+        await session.execute(stmt)
+        
+        # 2. Получаем оставшиеся треки
+        stmt = select(PlaylistTrackORM).where(
+            PlaylistTrackORM.playlist_id == playlist_id
+        ).order_by(PlaylistTrackORM.position)
+        result = await session.execute(stmt)
+        tracks = result.scalars().all()
+        
+        # 3. Пересчитываем позиции
+        for index, track in enumerate(tracks):
+            track.position = index
+        
+        await session.flush()
+
+    @ConnectionDecorator()
+    async def delete_user_playlist_relations(self, user_id: int, session: Optional[AsyncSession] = None) -> int:
+        """
+        Удаляет все записи пользователя из таблицы playlist_users
+        Возвращает количество удаленных связей
+        """
+        delete_stmt = delete(PlaylistUserORM).where(
+            PlaylistUserORM.user_id == user_id
+        ).returning(PlaylistUserORM.playlist_id)
+        
+        result = await session.execute(delete_stmt)
+        deleted_records = result.all()
+        
+        return len(deleted_records)

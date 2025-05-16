@@ -31,3 +31,19 @@ class PlaylistRepository(ABC):
     @abstractmethod
     async def get_user_playlists(self, user_id: int) -> List[Playlist]:
         raise NotImplementedError
+    
+    @abstractmethod
+    async def get_playlists_with_track(self, track_id: int) ->  List[Playlist]:
+        raise NotImplementedError
+    
+    @abstractmethod
+    async def remove_track_and_reorder(self, playlist_id: int, track_id: int) -> None:
+        raise NotImplementedError
+    
+    @abstractmethod
+    async def delete_user_playlist_relations(self, user_id: int) -> int:
+        """
+        Удаляет все связи пользователя с плейлистами (из playlist_users)
+        Возвращает количество удаленных связей
+        """
+        raise NotImplementedError

@@ -1,14 +1,21 @@
 from faststream.kafka import KafkaBroker
 from google.protobuf.message import Message
-from src.core.config import settings
-from src.core.logger import logger
 import asyncio
 from contextlib import asynccontextmanager
 
+from src.core.config import settings
+from src.core.logger import logger
+
+from src.domain.events.events import UserEvent
+from src.infrastructure.events.base_converter import BaseEventConverter
+
+
 class KafkaEventPublisher:
-    def __init__(self, broker: KafkaBroker):
+    def __init__(self, broker: KafkaBroker, destination: list[str], converters: BaseEventConverter):
         self._broker = broker
         self._connected = False
+        self._destination = destination
+        self._converters = converters
         self._lock = asyncio.Lock()
 
     async def connect(self):
@@ -44,21 +51,26 @@ class KafkaEventPublisher:
         finally:
             pass  # Не закрываем соединение явно, чтобы переиспользовать
 
-    async def publish(self, event: Message, topic: str, key: str | None = None):
+    async def publish(self, event: UserEvent, key: str | None = None):
         """Публикация сообщения с гарантированным подключением"""
         try:
-            async with self.get_producer() as producer:
-                message = event.SerializeToString()
-                await producer.publish(
-                    message=message,
-                    topic=topic,
-                    key=key.encode() if key else None,
-                )
-                logger.debug(f"Successfully published to {topic}")
+            async with self.get_producer() as producer:   
+                proto_event = self._converters.to_proto(event)            
+                headers = self._converters.get_headers(event)
+                message = proto_event.SerializeToString()
+
+                for topic in self._destination:
+                    await producer.publish(
+                        message=message,
+                        topic=topic,
+                        headers=headers,
+                        key=key.encode() if key else None,
+                    )
+                    logger.debug(f"Successfully published to {topic}")
         except Exception as e:
             logger.error(f"Publication failed: {str(e)}")
             raise
 
     @property
-    def destination(self) -> str:
-        return settings.KAFKA_USER_CONTEXT_TOPIC
+    def destination(self) -> list[str]:
+        return self._destination

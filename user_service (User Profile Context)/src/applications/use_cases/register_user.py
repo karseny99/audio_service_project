@@ -1,4 +1,4 @@
-from src.domain.events.events import UserRegistered
+from src.domain.events.events import UserRegistered, UserDeleted
 from src.domain.users.repository import UserRepository
 from src.domain.users.services import UserRegistrationService
 from src.domain.events.publisher import EventPublisher
@@ -32,14 +32,11 @@ class RegisterUserUseCase:
         logger.info(f"Registered: {user}")
 
 
-        await self._publisher.publish(
-            event=UserRegistered(
-                user_id=str(user.id),
-                email=email,
-                username=username
-            ).to_proto(),
-            topic=self._publisher.destination,
-            key=str(user.id)
-        )
+        # await self._publisher.publish(
+        #     event=UserDeleted(
+        #         user_id=str(user.id),
+        #     ),
+        #     key=str(user.id)
+        # )
 
         return str(user.id)
