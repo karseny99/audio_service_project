@@ -26,6 +26,8 @@ class Container(containers.DeclarativeContainer):
     )
 
     # Kafka зависимости
+    # Этого брокера надо создавать отдельно для консумера
+    # иначе будет плохо
     kafka_broker = providers.Singleton(
         KafkaBroker,
         bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS
@@ -45,3 +47,17 @@ class Container(containers.DeclarativeContainer):
         event_publisher=kafka_publisher_register_uc,
         registration_service=registration_service
     )
+
+    @classmethod
+    async def init_resources(cls):
+        """Инициализация всех ресурсов"""
+        await cls.kafka_publisher_register_uc().connect()
+        await cls.kafka_broker().start()
+        # Инициализация других ресурсов при необходимости
+
+    @classmethod
+    async def shutdown_resources(cls):
+        """Корректное завершение всех ресурсов"""
+        publisher = cls.kafka_publisher_register_uc()
+        if publisher:  # Проверка на None
+            await publisher.disconnect()
