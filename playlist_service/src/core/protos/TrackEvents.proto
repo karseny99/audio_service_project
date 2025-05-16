@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+message TrackDeleted {
+    string track_id = 1;
+}

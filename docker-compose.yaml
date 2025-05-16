@@ -1,0 +1,113 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: 1
+      POSTGRES_DB: audio_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U user -d audio_db"]
+      interval: 5s
+      retries: 5
+
+  db-init:
+    image: postgres:17-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: "1"
+    volumes:
+      - ./ddl.sql:/ddl.sql:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        echo "Applying DDL to audio_db…"
+        psql -h postgres -U user -d audio_db -f /ddl.sql
+        echo "DDL applied."
+    # после выполнения контейнер остановится
+
+  # Zookeeper (обязателен для Kafka)
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOO_SERVER_ID: 1
+      ZOO_SERVERS: "zookeeper:2888:3888"
+      ZOO_4LW_COMMANDS_WHITELIST: "mntr,ruok"
+    volumes:
+      - zookeeper_data:/bitnami
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+  kafka:
+    image: bitnami/kafka:3.4
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "INTERNAL://kafka:9092,EXTERNAL://localhost:29092"
+      KAFKA_CFG_LISTENERS: "INTERNAL://:9092,EXTERNAL://:29092"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_BROKER_ID: 1
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_CFG_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+    volumes:
+      - kafka_data:/bitnami
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: |
+        kafka-topics.sh --bootstrap-server kafka:9092 --list && \
+        kafka-consumer-groups.sh --bootstrap-server kafka:9092 --list
+      interval: 15s
+      timeout: 30s
+      retries: 20
+      start_period: 60s
+
+
+  kafka-init:
+    image: bitnami/kafka:3.4
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./init-kafka-topics.sh:/init-kafka-topics.sh
+    entrypoint: ["/bin/bash", "/init-kafka-topics.sh"]
+
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8082:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+      KAFKA_CLUSTERS_0_ZOOKEEPER: "zookeeper:2181"
+    depends_on:
+      - kafka
+
+volumes:
+  zookeeper_data:
+  kafka_data:
+  postgres_data:
