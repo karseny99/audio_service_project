@@ -79,3 +79,15 @@ class Container(containers.DeclarativeContainer):
         topic=settings.KAFKA_PLAYLIST_CONTEXT_TOPIC,
         event_mappings=event_mappings
     )
+
+
+    @classmethod
+    async def init_resources(cls):
+        """пока тут нечего инициализировать перед стартом"""
+        pass 
+
+    @classmethod
+    async def shutdown_resources(cls):
+        publisher = cls.kafka_publisher()
+        if publisher:  # Проверка на None
+            await publisher.disconnect()
