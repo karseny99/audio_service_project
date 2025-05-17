@@ -7,10 +7,11 @@ from src.core.config import settings
 from src.core.logger import logger
 
 from src.domain.events.events import UserEvent
+from src.domain.events.publisher import EventPublisher
 from src.infrastructure.events.base_converter import BaseEventConverter
 
 
-class KafkaEventPublisher:
+class KafkaEventPublisher(EventPublisher):
     def __init__(self, broker: KafkaBroker, destination: list[str], converters: BaseEventConverter):
         self._broker = broker
         self._connected = False
