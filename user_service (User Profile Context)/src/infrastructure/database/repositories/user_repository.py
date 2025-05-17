@@ -19,19 +19,19 @@ class PostgresUserRepository(UserRepository):
             expire_on_commit=False
         )
 
-    @ConnectionDecorator(isolation_level="READ COMMITTED")
+    @ConnectionDecorator()
     async def get_by_id(self, user_id: int, session: Optional[AsyncSession] = None) -> Optional[User]:
         user_orm = await session.get(UserORM, user_id)
         return user_orm.to_domain() if user_orm else None
-    
-    @ConnectionDecorator(isolation_level="READ COMMITTED")
+
+    @ConnectionDecorator()
     async def get_by_email(self, email: str, session: Optional[AsyncSession] = None) -> Optional[User]:
         stmt = select(UserORM).where(UserORM.email == email)
         result = await session.execute(stmt)
         user_orm = result.scalar_one_or_none()
         return user_orm.to_domain() if user_orm else None
 
-    @ConnectionDecorator(isolation_level="READ COMMITTED")
+    @ConnectionDecorator()
     async def get_by_username(self, username: str, session: Optional[AsyncSession] = None) -> Optional[User]:
         stmt = select(UserORM).where(UserORM.username == username)
         result = await session.execute(stmt)

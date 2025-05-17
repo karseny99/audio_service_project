@@ -4,30 +4,43 @@ from src.core.di import Container
 from src.core.logger import logger
 from functools import wraps
 
-def with_kafka_cleanup(main_func):
+def di_raii(main_func):
     @wraps(main_func)
     async def wrapper():
         container = Container()
         try:
+            # Инициализация ресурсов перед запуском
+            await Container.init_resources()
             await main_func()
+        except asyncio.CancelledError:
+            logger.info("Received shutdown signal")
+            raise
+        except Exception as e:
+            logger.error(f"Application error: {e}")
+            raise
         finally:
-            publisher = container.kafka_publisher()
-            await publisher.disconnect()
-            logger.info("Kafka publisher disconnected")
+            # Гарантированная очистка ресурсов
+            try:
+                await Container.shutdown_resources()
+                logger.info("Resources cleaned up successfully")
+            except Exception as e:
+                logger.error(f"Error during cleanup: {e}")
+                raise
     return wrapper
 
 
-@with_kafka_cleanup
+@di_raii
 async def main():
-    # Dependency injection before start up
     container = Container()
     container.wire(modules=["src.infrastructure.grpc.server"])
-
-    await container.kafka_publisher().connect()
-
+    
     await asyncio.gather(
-        serve_grpc(),  # gRPC-сервер
-        # app.run()      # Kafka-консьюмер
+        serve_grpc(),
+        # тут еще консумер должен быть
     )
 
-asyncio.run(main())
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Application shutdown by user")

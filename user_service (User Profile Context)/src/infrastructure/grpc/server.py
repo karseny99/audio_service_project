@@ -42,23 +42,6 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
             await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {str(e)}")
 
 
-    async def RegisterUser(self, request, context):
-        try:
-            user_id = await self.register_use_case.execute(
-                email=request.email,
-                password=request.password,
-                username=request.username
-            )
-            return commands_pb2.RegisterUserResponse(user_id=user_id)
-        
-        except ValueObjectException as e:
-            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
-        except (EmailAlreadyExistsError, UsernameAlreadyExistsError) as e:
-            await context.abort(grpc.StatusCode.ALREADY_EXISTS, str(e)) 
-        except Exception as e:
-            await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {str(e)}")
-
-
 async def serve_grpc():
     # Инициализация publisher
     

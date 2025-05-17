@@ -62,12 +62,38 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "click"
+version = "8.2.0"
+description = "Composable command line interface toolkit"
+category = "main"
+optional = false
+python-versions = ">=3.10"
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
 category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
+
+[[package]]
+name = "dependency-injector"
+version = "4.46.0"
+description = "Dependency injection framework for Python"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+yaml = ["pyyaml"]
+pydantic = ["pydantic"]
+pydantic2 = ["pydantic-settings"]
+flask = ["flask"]
+aiohttp = ["aiohttp"]
 
 [[package]]
 name = "exceptiongroup"
@@ -93,8 +119,25 @@ anyio = ">=3.0.0,<5.0.0"
 pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<3.0.0"
 
 [[package]]
+name = "fastapi"
+version = "0.115.12"
+description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<2.0.0 || >2.0.0,<2.0.1 || >2.0.1,<2.1.0 || >2.1.0,<3.0.0"
+starlette = ">=0.40.0,<0.47.0"
+typing-extensions = ">=4.8.0"
+
+[package.extras]
+standard = ["fastapi-cli[standard] (>=0.0.5)", "httpx (>=0.23.0)", "jinja2 (>=3.1.5)", "python-multipart (>=0.0.18)", "email-validator (>=2.0.0)", "uvicorn[standard] (>=0.12.0)"]
+all = ["fastapi-cli[standard] (>=0.0.5)", "httpx (>=0.23.0)", "jinja2 (>=3.1.5)", "python-multipart (>=0.0.18)", "itsdangerous (>=1.1.0)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "orjson (>=3.2.1)", "email-validator (>=2.0.0)", "uvicorn[standard] (>=0.12.0)", "pydantic-settings (>=2.0.0)", "pydantic-extra-types (>=2.0.0)"]
+
+[[package]]
 name = "faststream"
-version = "0.5.39"
+version = "0.5.40"
 description = "FastStream: the simplest way to work with a messaging queues"
 category = "main"
 optional = false
@@ -107,21 +150,21 @@ fast-depends = ">=2.4.0b0,<3.0.0"
 typing-extensions = ">=4.8.0"
 
 [package.extras]
-cli = ["typer (>=0.9,!=0.12,<=0.15.2)", "watchfiles (>=0.15.0,<1.1.0)"]
+cli = ["typer (>=0.9,!=0.12,<=0.15.3)", "watchfiles (>=0.15.0,<1.1.0)"]
 confluent = ["confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)"]
-dev = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "bandit (==1.7.10)", "bandit (==1.8.3)", "cairosvg", "codespell (==2.4.1)", "confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)", "confluent-kafka-stubs", "coverage[toml] (==7.6.1)", "coverage[toml] (==7.8.0)", "detect-secrets (==1.5.0)", "dirty-equals (==0.9.0)", "email-validator (==2.2.0)", "fastapi (==0.115.12)", "httpx (==0.28.1)", "mdx-include (==1.4.2)", "mike (==2.1.3)", "mkdocs-git-revision-date-localized-plugin (==1.4.5)", "mkdocs-glightbox (==0.4.0)", "mkdocs-literate-nav (==0.6.2)", "mkdocs-macros-plugin (==1.3.7)", "mkdocs-material (==9.6.11)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-static-i18n (==1.3.0)", "mkdocstrings[python] (==0.26.1)", "mkdocstrings[python] (==0.29.1)", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "pillow", "pre-commit (==3.5.0)", "pre-commit (==4.2.0)", "prometheus-client (>=0.20.0,<0.30.0)", "pydantic-settings (>=2.0.0,<3.0.0)", "pytest-asyncio (==0.24.0)", "pytest-asyncio (==0.26.0)", "pytest (==8.3.5)", "pyyaml (==6.0.2)", "redis (>=5.0.0,<6.0.0)", "requests", "ruff (==0.11.4)", "semgrep (==1.117.0)", "semgrep (==1.99.0)", "typer (>=0.9,!=0.12,<=0.15.2)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "typing-extensions (>=4.8.0,<4.12.1)", "watchfiles (>=0.15.0,<1.1.0)"]
-devdocs = ["cairosvg", "mdx-include (==1.4.2)", "mike (==2.1.3)", "mkdocs-git-revision-date-localized-plugin (==1.4.5)", "mkdocs-glightbox (==0.4.0)", "mkdocs-literate-nav (==0.6.2)", "mkdocs-macros-plugin (==1.3.7)", "mkdocs-material (==9.6.11)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-static-i18n (==1.3.0)", "mkdocstrings[python] (==0.26.1)", "mkdocstrings[python] (==0.29.1)", "pillow", "requests"]
+dev = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "bandit (==1.7.10)", "bandit (==1.8.3)", "cairosvg", "codespell (==2.4.1)", "confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)", "confluent-kafka-stubs", "coverage[toml] (==7.6.1)", "coverage[toml] (==7.8.0)", "detect-secrets (==1.5.0)", "dirty-equals (==0.9.0)", "email-validator (==2.2.0)", "fastapi (==0.115.12)", "httpx (==0.28.1)", "mdx-include (==1.4.2)", "mike (==2.1.3)", "mkdocs-git-revision-date-localized-plugin (==1.4.5)", "mkdocs-glightbox (==0.4.0)", "mkdocs-literate-nav (==0.6.2)", "mkdocs-macros-plugin (==1.3.7)", "mkdocs-material (==9.6.12)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-static-i18n (==1.3.0)", "mkdocstrings[python] (==0.26.1)", "mkdocstrings[python] (==0.29.1)", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "pillow", "pre-commit (==3.5.0)", "pre-commit (==4.2.0)", "prometheus-client (>=0.20.0,<0.30.0)", "pydantic-settings (>=2.0.0,<3.0.0)", "pytest-asyncio (==0.24.0)", "pytest-asyncio (==0.26.0)", "pytest (==8.3.5)", "pyyaml (==6.0.2)", "redis (>=5.0.0,<7.0.0)", "requests", "ruff (==0.11.8)", "semgrep (==1.120.1)", "semgrep (==1.99.0)", "typer (>=0.9,!=0.12,<=0.15.3)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "typing-extensions (>=4.8.0,<4.12.1)", "watchfiles (>=0.15.0,<1.1.0)"]
+devdocs = ["cairosvg", "mdx-include (==1.4.2)", "mike (==2.1.3)", "mkdocs-git-revision-date-localized-plugin (==1.4.5)", "mkdocs-glightbox (==0.4.0)", "mkdocs-literate-nav (==0.6.2)", "mkdocs-macros-plugin (==1.3.7)", "mkdocs-material (==9.6.12)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-static-i18n (==1.3.0)", "mkdocstrings[python] (==0.26.1)", "mkdocstrings[python] (==0.29.1)", "pillow", "requests"]
 kafka = ["aiokafka (>=0.9,<0.13)"]
-lint = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "bandit (==1.7.10)", "bandit (==1.8.3)", "codespell (==2.4.1)", "confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)", "confluent-kafka-stubs", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<6.0.0)", "ruff (==0.11.4)", "semgrep (==1.117.0)", "semgrep (==1.99.0)", "typer (>=0.9,!=0.12,<=0.15.2)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "watchfiles (>=0.15.0,<1.1.0)"]
+lint = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "bandit (==1.7.10)", "bandit (==1.8.3)", "codespell (==2.4.1)", "confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)", "confluent-kafka-stubs", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<7.0.0)", "ruff (==0.11.8)", "semgrep (==1.120.1)", "semgrep (==1.99.0)", "typer (>=0.9,!=0.12,<=0.15.3)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "watchfiles (>=0.15.0,<1.1.0)"]
 nats = ["nats-py (>=2.7.0,<=3.0.0)"]
-optionals = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<6.0.0)", "typer (>=0.9,!=0.12,<=0.15.2)", "watchfiles (>=0.15.0,<1.1.0)"]
+optionals = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<7.0.0)", "typer (>=0.9,!=0.12,<=0.15.3)", "watchfiles (>=0.15.0,<1.1.0)"]
 otel = ["opentelemetry-sdk (>=1.24.0,<2.0.0)"]
 prometheus = ["prometheus-client (>=0.20.0,<0.30.0)"]
 rabbit = ["aio-pika (>=9,<10)"]
-redis = ["redis (>=5.0.0,<6.0.0)"]
+redis = ["redis (>=5.0.0,<7.0.0)"]
 test-core = ["coverage[toml] (==7.6.1)", "coverage[toml] (==7.8.0)", "dirty-equals (==0.9.0)", "pytest-asyncio (==0.24.0)", "pytest-asyncio (==0.26.0)", "pytest (==8.3.5)", "typing-extensions (>=4.8.0,<4.12.1)"]
 testing = ["coverage[toml] (==7.6.1)", "coverage[toml] (==7.8.0)", "dirty-equals (==0.9.0)", "email-validator (==2.2.0)", "fastapi (==0.115.12)", "httpx (==0.28.1)", "pydantic-settings (>=2.0.0,<3.0.0)", "pytest-asyncio (==0.24.0)", "pytest-asyncio (==0.26.0)", "pytest (==8.3.5)", "pyyaml (==6.0.2)", "typing-extensions (>=4.8.0,<4.12.1)"]
-types = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)", "confluent-kafka-stubs", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<6.0.0)", "typer (>=0.9,!=0.12,<=0.15.2)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "watchfiles (>=0.15.0,<1.1.0)"]
+types = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "confluent-kafka (>=2.6,!=2.8.1,<3)", "confluent-kafka (>=2,!=2.8.1,<3)", "confluent-kafka-stubs", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<7.0.0)", "typer (>=0.9,!=0.12,<=0.15.3)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "watchfiles (>=0.15.0,<1.1.0)"]
 
 [[package]]
 name = "grpcio"
@@ -304,6 +347,20 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "starlette"
+version = "0.46.2"
+description = "The little ASGI library that shines."
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+anyio = ">=3.6.2,<5"
+
+[package.extras]
+full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
+
+[[package]]
 name = "typing-extensions"
 version = "4.13.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -323,6 +380,22 @@ python-versions = ">=3.9"
 typing-extensions = ">=4.12.0"
 
 [[package]]
+name = "uvicorn"
+version = "0.34.2"
+description = "The lightning-fast ASGI server."
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+click = ">=7.0"
+h11 = ">=0.8"
+typing-extensions = {version = ">=4.0", markers = "python_version < \"3.11\""}
+
+[package.extras]
+standard = ["colorama (>=0.4)", "httptools (>=0.6.3)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.14.0,!=0.15.0,!=0.15.1)", "watchfiles (>=0.13)", "websockets (>=10.4)"]
+
+[[package]]
 name = "win32-setctime"
 version = "1.2.0"
 description = "A small Python utility to set file creation time on Windows"
@@ -336,7 +409,7 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "8ca8f1555e0ede548cfd95c222851c51d33b30fdbfc626db5fc99c78b6acc7fe"
+content-hash = "941ff2ca666cdbf27bf2f1542fbf42af132f4685aef93a560011f21164742c30"
 
 [metadata.files]
 aiokafka = []
@@ -344,9 +417,12 @@ annotated-types = []
 anyio = []
 async-timeout = []
 certifi = []
+click = []
 colorama = []
+dependency-injector = []
 exceptiongroup = []
 fast-depends = []
+fastapi = []
 faststream = []
 grpcio = []
 grpcio-tools = []
@@ -362,6 +438,8 @@ pydantic-core = []
 pydantic-settings = []
 python-dotenv = []
 sniffio = []
+starlette = []
 typing-extensions = []
 typing-inspection = []
+uvicorn = []
 win32-setctime = []

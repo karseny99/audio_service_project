@@ -1,8 +1,10 @@
 import asyncio
+from functools import wraps
+
 from src.infrastructure.grpc.server import serve_grpc
+from src.infrastructure.kafka.consumer import KafkaConsumer
 from src.core.di import Container
 from src.core.logger import logger
-from functools import wraps
 
 def with_kafka_cleanup(main_func):
     @wraps(main_func)
@@ -19,15 +21,15 @@ def with_kafka_cleanup(main_func):
 
 @with_kafka_cleanup
 async def main():
-    # Dependency injection before start up
     container = Container()
     container.wire(modules=["src.infrastructure.grpc.server"])
 
-    await container.kafka_publisher().connect()
+    consumer = await container.kafka_consumer().start()
 
     await asyncio.gather(
         serve_grpc(),  # gRPC-сервер
-        # app.run()      # Kafka-консьюмер
+        asyncio.Future(),  # infinite cycle
     )
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
