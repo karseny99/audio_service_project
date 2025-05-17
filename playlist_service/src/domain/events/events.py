@@ -7,12 +7,7 @@ class PlaylistEvent:
     """
         Base class for playlist events
     """
-    def to_proto(self) -> Message:
-        raise NotImplementedError
-
-    def get_headers(self) -> dict:
-        return {'event-type': self.__class__.__name__}
-
+    pass
 
 @dataclass
 class UserDeleted:

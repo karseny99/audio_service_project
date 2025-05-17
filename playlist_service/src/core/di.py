@@ -10,6 +10,9 @@ from src.infrastructure.kafka.publisher import KafkaEventPublisher
 from src.infrastructure.kafka.consumer import KafkaConsumer, EventTypeMapping
 from src.infrastructure.event_handlers.user_deleted import UserDeletedHandler
 
+from src.infrastructure.events.converters import UserEventConverter
+from src.infrastructure.events.base_converter import BaseEventConverter
+
 from src.core.protos.generated import UserEvents_pb2
 from src.core.config import settings
 
@@ -32,10 +35,24 @@ class Container(containers.DeclarativeContainer):
         bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS
     )
 
+    # Kafka publisher (use another for each use case, cuz public topics could differ)
     kafka_publisher = providers.Singleton(
         KafkaEventPublisher,
-        broker=kafka_broker
+        broker=kafka_broker,
+        destination=[settings.KAFKA_PLAYLIST_CONTEXT_TOPIC],
+        converters=BaseEventConverter,
+                # not valid code now cuz imported abstract converter
+                # needs specialization for playlist's events 
+                # - check event converter for that in user_service/src/infra/events/ 
     )
+
+    # kafka_publisher_register_uc = providers.Singleton(
+    #     KafkaEventPublisher,
+    #     broker=kafka_broker,
+    #     destination=[settings.KAFKA_PLAYLIST_CONTEXT_TOPIC],
+    #     converters=UserEventConverter,
+    # )
+
 
     # gRPC клиенты
     track_service_client = providers.Singleton(
@@ -72,7 +89,7 @@ class Container(containers.DeclarativeContainer):
     }
 )
 
-    # Kafka Consumer
+    # Kafka Consumer 
     kafka_consumer = providers.Singleton(
         KafkaConsumer,
         broker=kafka_broker,
