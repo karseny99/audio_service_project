@@ -17,6 +17,8 @@ asyncpg = "^0.30.0"
 faststream = {extras = ["kafka"], version = "^0.5.39"}
 dependency-injector = "^4.46.0"
 pyjwt = "^2.8.0"
+pydantic = "^2.11.4"
+passlib = "^1.7.4"
 
 [tool.poetry.dev-dependencies]
 

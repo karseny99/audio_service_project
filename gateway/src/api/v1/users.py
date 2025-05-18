@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from dependency_injector.wiring import inject, Provide
 from pydantic import BaseModel
 from src.services.user_service import change_password
-from src.schemas.user import ChangePasswordRequest
+from src.schemas.user import ChangePasswordRequest, ChangePasswordResponse
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -24,7 +24,11 @@ async def change_password_endpoint(
             old_password=payload.old_password,
             new_password=payload.new_password
         )
-        return {"status": "password_changed"}
+        resp = ChangePasswordResponse(
+            status="password_changed"
+        )
+        return resp
+    
     except ValueError as e:
         # сюда попадут Invalid creds или Not found
         detail = str(e)

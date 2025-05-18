@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from src.domain.users.value_objects.password_hash import PasswordHash
-from src.domain.events.events import PasswordChangedEvent
 from src.domain.events.publisher import EventPublisher
 from src.domain.users.repository import UserRepository
 from src.core.exceptions import UserNotFoundError, InvalidPasswordError
@@ -32,6 +31,11 @@ class ChangePasswordUseCase:
             raise InvalidPasswordError("Old password incorrect")
 
         # 3. Устанавливаем новый хэш
+        print()
+        print()
+        print(old_password)
+        print(new_password)
+        print()
         new_hash = PasswordHash(new_password)  # сам хэширует
         user.change_password(new_hash)
 
@@ -39,11 +43,11 @@ class ChangePasswordUseCase:
         await self._repo.update(user)
 
         # 5. (опционально) публикуем событие
-        await self._publisher.publish(
-            event=PasswordChangedEvent(
-                user_id=str(user.id),
-                changed_at=datetime.utcnow()
-            ),
-            topic=self._publisher.destination,
-            key=str(user.id)
-        )
+        # await self._publisher.publish(
+        #     event=PasswordChangedEvent(
+        #         user_id=str(user.id),
+        #         changed_at=datetime.utcnow()
+        #     ),
+        #     topic=self._publisher.destination,
+        #     key=str(user.id)
+        # )

@@ -33,10 +33,12 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
     def __init__(
             self,
             register_uc=Provide[Container.register_use_case],
-            change_password_uc=Provide[Container.change_password_use_case],
+            # change_password_uc=Provide[Container.change_password_use_case],
+            user_repo: PostgresUserRepository = Provide[Container.user_repository],
     ):
         self._register_uc = register_uc
-        self._change_uc = change_password_uc
+        self._repo = user_repo
+        # self._change_uc = change_password_uc
 
     async def RegisterUser(self, request, context):
         try:
@@ -64,20 +66,25 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
 
     async def ChangePassword(self, request, context):
         try:
-            await self._change_uc.execute(
-                user_id=int(request.user_id),
-                old_password=request.old_password,
-                new_password=request.new_password
-            )
+            user = await self._repo.get_by_id(int(request.user_id))
+            if user is None:
+                await context.abort(StatusCode.NOT_FOUND, "User not found")
+
+            if not user.password_hash.verify(request.old_password):
+                await context.abort(StatusCode.INVALID_ARGUMENT, "Old password incorrect")
+
+            user.password_hash = PasswordHash(request.new_password)
+            updated = await self._repo.update(user)
+            if updated is None:
+                await context.abort(StatusCode.INTERNAL, "Failed to update password")
+
             return Empty()
 
-        except UserNotFoundError:
-            await context.abort(StatusCode.NOT_FOUND, "User not found")
-        except InvalidPasswordError:
-            await context.abort(StatusCode.INVALID_ARGUMENT, "Old password incorrect")
-        except ValueObjectException as e:
-            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
-        except Exception as e:
+        except ValueError as ve:
+            # в domain layer могли быть ошибки VO
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(ve))
+        except Exception as ex:
+            logger.exception("Unexpected error in ChangePassword")
             await context.abort(StatusCode.INTERNAL, "Internal server error")
 
 

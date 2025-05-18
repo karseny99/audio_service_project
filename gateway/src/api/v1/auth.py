@@ -3,7 +3,7 @@ from dependency_injector.wiring import inject, Provide
 from src.core.jwt_utils import create_access_token, verify_token
 from src.core.container import Container
 from src.services.user_service import register_user, authenticate_user
-from src.schemas.user import RegisterUserRequest, LoginUserRequest
+from src.schemas.user import RegisterUserRequest, RegisterUserResponse, LoginUserRequest, LoginUserResponse
 import grpc
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -16,7 +16,11 @@ async def register_user_endpoint(
 ):
     try:
         user_id = register_user(req.username, req.email, req.password)
-        return {"status": "created", "user_id": user_id}
+        resp = RegisterUserResponse(
+            status="created",
+            user_id=user_id
+        )
+        return resp
 
     except ValueError as e:
         # сюда упадут ошибки валидации (INVALID_ARGUMENT) или ALREADY_EXISTS
@@ -50,7 +54,12 @@ def login(req: LoginUserRequest):
     try:
         user_id = authenticate_user(req.username, req.password)
         token = create_access_token(user_id)
-        return {"access_token": token, "token_type": "bearer"}
+        resp = LoginUserResponse(
+            access_token=token,
+            token_type="bearer"
+        )
+        return resp
+    
     except ValueError as e:
         # 404 vs 401 по тексту
         msg = str(e)

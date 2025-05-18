@@ -9,3 +9,9 @@ class UsernameAlreadyExistsError(DomainError):
 
 class ValueObjectException(ValueError):
     pass
+
+class UserNotFoundError(DomainError):
+    pass
+
+class InvalidPasswordError(DomainError):
+    pass
