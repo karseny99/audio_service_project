@@ -1,10 +1,13 @@
 from dependency_injector import containers, providers
 from faststream.kafka import KafkaBroker
 from src.infrastructure.database.repositories.user_repository import PostgresUserRepository
+from src.infrastructure.kafka.publisher import KafkaEventPublisher
+
 from src.domain.users.services import UserRegistrationService
 from src.applications.use_cases.register_user import RegisterUserUseCase
 from src.applications.use_cases.change_password import ChangePasswordUseCase
-from src.infrastructure.kafka.publisher import KafkaEventPublisher
+from src.applications.use_cases.auth_user import AuthUserUseCase
+
 from src.core.config import settings
 
 class Container(containers.DeclarativeContainer):
@@ -48,4 +51,9 @@ class Container(containers.DeclarativeContainer):
         ChangePasswordUseCase,
         user_repo=user_repository,
         event_publisher=kafka_publisher
+    )
+
+    auth_user_use_case = providers.Factory(
+        AuthUserUseCase,
+        user_repo=user_repository,
     )

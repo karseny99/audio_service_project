@@ -1,5 +1,3 @@
-# user_service/src/applications/use_cases/change_password.py
-
 from datetime import datetime
 from src.domain.users.value_objects.password_hash import PasswordHash
 from src.domain.events.publisher import EventPublisher

@@ -32,13 +32,13 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
     @inject
     def __init__(
             self,
-            register_uc=Provide[Container.register_use_case],
-            change_password_uc=Provide[Container.change_password_use_case],
-            user_repo: PostgresUserRepository = Provide[Container.user_repository],
+            register_uc = Provide[Container.register_use_case],
+            change_password_uc = Provide[Container.change_password_use_case],
+            auth_uc = Provide[Container.auth_user_use_case],
     ):
         self._register_uc = register_uc
-        self._repo = user_repo
         self._change_uc = change_password_uc
+        self._auth_us = auth_uc
 
     async def RegisterUser(self, request, context):
         try:
@@ -55,15 +55,22 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
             await context.abort(StatusCode.INTERNAL, f"Internal error: {e}")
 
     async def AuthenticateUser(self, request, context):
-        repo = PostgresUserRepository()
-        user = await repo.get_by_username(request.username)
-        if user is None:
-            await context.abort(StatusCode.NOT_FOUND, "User not found")
-
-        if request.password != user.password_hash.value:
-            await context.abort(StatusCode.INVALID_ARGUMENT, "Invalid credentials")
+        try:
+            user_id = await self._auth_uc.execute(
+                username=request.username,
+                password=request.password,
+            )
+            return commands_pb2.AuthenticateUserResponse(user_id=user_id)
         
-        return commands_pb2.AuthenticateUserResponse(user_id=str(user.id))
+        except ValueObjectException as e:
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
+        except UserNotFoundError as e:            
+            await context.abort(StatusCode.NOT_FOUND, str(e))
+        except InvalidPasswordError as e:
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            await context.abort(StatusCode.INTERNAL, f"Internal error: {e}")
+
 
     async def ChangePassword(self, request, context):
         try:
