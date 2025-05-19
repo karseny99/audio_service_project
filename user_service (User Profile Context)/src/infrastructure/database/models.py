@@ -49,7 +49,7 @@ class UserORM(Base):
             id=self.user_id,
             email=EmailAddress(self.email),
             username=Username(self.username),
-            password_hash=PasswordHash(self.password_hash, already_hashed=True),
+            password_hash=PasswordHash(self.password_hash),
             created_at=self.created_at
         )
 

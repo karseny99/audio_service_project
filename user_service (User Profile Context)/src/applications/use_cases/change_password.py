@@ -21,33 +21,15 @@ class ChangePasswordUseCase:
         old_password: str,
         new_password: str
     ) -> None:
-        # 1. Получаем агрегат
         user = await self._repo.get_by_id(user_id)
         if not user:
             raise UserNotFoundError(f"User {user_id} not found")
 
-        # 2. Проверяем старый пароль
-        if not user.password_hash.verify(old_password):
+        if user.password_hash.value != old_password:
             raise InvalidPasswordError("Old password incorrect")
 
-        # 3. Устанавливаем новый хэш
-        print()
-        print()
-        print(old_password)
-        print(new_password)
-        print()
-        new_hash = PasswordHash(new_password)  # сам хэширует
-        user.change_password(new_hash)
-
-        # 4. Сохраняем
+        user.change_password(PasswordHash(new_password))
         await self._repo.update(user)
 
-        # 5. (опционально) публикуем событие
-        # await self._publisher.publish(
-        #     event=PasswordChangedEvent(
-        #         user_id=str(user.id),
-        #         changed_at=datetime.utcnow()
-        #     ),
-        #     topic=self._publisher.destination,
-        #     key=str(user.id)
-        # )
+        # Опциональная публикация события
+        # await self._publisher.publish(...)

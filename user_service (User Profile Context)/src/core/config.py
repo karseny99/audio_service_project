@@ -1,8 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import ClassVar
+import re
 import os
-from typing import Optional
 
 class Settings(BaseSettings):
+    
+    BCRYPT_SALT: ClassVar[str] = "$2b$12$ABCDEFGHIJKLMNOPQRSTUV"
+
     BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     ENV: str = "local"  # local/stage/prod
     

@@ -18,6 +18,7 @@ dependency-injector = "^4.46.0"
 pydantic = {extras = ["email"], version = "^2.11.4"}
 uvicorn = "^0.34.2"
 pyjwt = "^2.10.1"
+passlib = "^1.7.4"
 
 [tool.poetry.dev-dependencies]
 

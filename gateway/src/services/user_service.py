@@ -1,7 +1,10 @@
 # gateway/services/user_service.py
+import sys
 from grpc import RpcError, StatusCode
 from src.core.dependencies.grpc_clients import get_user_command_stub
 from src.protos.user_context.generated import commands_pb2, commands_pb2_grpc
+from src.core.password_utils import hash_password
+
 
 def register_user(username: str, email: str, password: str) -> str:
     """
@@ -23,10 +26,11 @@ def register_user(username: str, email: str, password: str) -> str:
     stub = get_user_command_stub()
     
     # 3. Формируем запрос
+    hashed_password = hash_password(password)
     request = commands_pb2.RegisterUserRequest(
         username=str(username),
         email=str(email),
-        password=str(password)
+        password=hashed_password
     )
     
     try:
@@ -57,8 +61,12 @@ def authenticate_user(username: str, password: str) -> str:
         RuntimeError: все остальные ошибки
     """
     stub = get_user_command_stub()
+
+    hashed_password = hash_password(password)
+
     request = commands_pb2.AuthenticateUserRequest(
-        username=username, password=password
+        username=username,
+        password=hashed_password
     )
     try:
         response = stub.AuthenticateUser(request, timeout=5.0)
@@ -80,11 +88,15 @@ def change_password(user_id: str, old_password: str, new_password: str) -> None:
       ValueError: если неверные креды
       RuntimeError: при прочих ошибках
     """
+
+    old_password_hashed = hash_password(old_password)
+    new_password_hashed = hash_password(new_password)
+
     stub = get_user_command_stub()
     request = commands_pb2.ChangePasswordRequest(
         user_id=user_id,
-        old_password=old_password,
-        new_password=new_password
+        old_password=old_password_hashed,
+        new_password=new_password_hashed
     )
     try:
         stub.ChangePassword(request, timeout=5.0)
