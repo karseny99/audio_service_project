@@ -1,0 +1,41 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+message VerifyTrackRequest {
+  string track_id = 1; 
+}
+
+message VerifyTrackResponse {
+  bool exists = 1; 
+}
+
+
+message ArtistInfo {
+  int32 artist_id = 1;
+  string name = 2;
+}
+
+message Genre {
+  int32 genre_id = 1;
+  string name = 2;
+}
+
+message Track {
+  int32 track_id = 1;
+  string title = 2;
+  int32 duration_ms = 3;  
+  repeated ArtistInfo artists = 4;
+  repeated Genre genres = 5;
+  bool explicit = 6;
+  string release_date = 7;  // YYYY-MM-DD
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message GetTrackRequest {
+  int32 track_id = 1;
+}
+
+service TrackService {
+  rpc VerifyTrackExists (VerifyTrackRequest) returns (VerifyTrackResponse);
+  rpc GetTrack (GetTrackRequest) returns (Track) {}
+}

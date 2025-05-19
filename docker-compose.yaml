@@ -107,7 +107,26 @@ services:
     depends_on:
       - kafka
 
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=1
+      - REDIS_USERNAME=admin
+    command: ["--requirepass 1"]
+    volumes:
+      - redis_data:/data
+    healthcheck:                    # '1' is password
+      test: ["CMD", "redis-cli", "-a", "1", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+
 volumes:
   zookeeper_data:
   kafka_data:
   postgres_data:
+  redis_data:
