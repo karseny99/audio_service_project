@@ -1,7 +1,7 @@
 from dependency_injector.wiring import inject, Provide
 
 from src.domain.playlists.repository import PlaylistRepository
-from src.domain.music_catalog.services import AbstractTrackService
+from src.domain.tracks.services import AbstractTrackService
 from src.domain.events.publisher import EventPublisher
 from src.core.exceptions import (
     TrackNotFoundError,
