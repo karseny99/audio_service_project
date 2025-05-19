@@ -24,6 +24,7 @@ topics=(
   "user-topic:3:1"
   "playlist-topic:3:1"
   "listening-history-topic:3:1"
+  "music-topic:3:1"
   "application-logs:3:1"
 )
 

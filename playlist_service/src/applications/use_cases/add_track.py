@@ -10,9 +10,12 @@ from src.core.exceptions import (
 from src.core.logger import logger
 
 
+'''
 
+    Need to rebuilt it, cuz looks like shit 
+
+'''
 class AddTrackToPlaylistUseCase:
-    @inject
     def __init__(
         self,
         playlist_repo: PlaylistRepository,
