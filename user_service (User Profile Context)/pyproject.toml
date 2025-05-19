@@ -19,6 +19,7 @@ dependency-injector = "^4.46.0"
 pyjwt = "^2.8.0"
 pydantic = "^2.11.4"
 passlib = "^1.7.4"
+aioredis = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 

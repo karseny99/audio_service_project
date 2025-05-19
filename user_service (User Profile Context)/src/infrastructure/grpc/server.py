@@ -1,32 +1,23 @@
-from src.core.config import settings
-from src.core.logger import logger
-from src.applications.use_cases.register_user import RegisterUserUseCase
-from src.core.protos.generated import commands_pb2
-from src.core.protos.generated import commands_pb2_grpc
+from google.protobuf.empty_pb2 import Empty
+from grpc import StatusCode
+from dependency_injector.wiring import inject, Provide
+import grpc
+import asyncio
+
+from src.core.di import Container
+from src.core.protos.generated import commands_pb2, commands_pb2_grpc
 from src.core.di import Container
 from src.core.exceptions import (
     ValueObjectException,
-    EmailAlreadyExistsError,
+    UserNotFoundError,
+    InvalidPasswordError,
+    EmailAlreadyExistsError, 
     UsernameAlreadyExistsError
 )
 
-from google.protobuf.empty_pb2 import Empty
-from grpc import StatusCode
-from dependency_injector.wiring import inject, Provide
-from src.core.di import Container
-from src.core.protos.generated import commands_pb2, commands_pb2_grpc
-from src.core.exceptions import ValueObjectException, UserNotFoundError, InvalidPasswordError
+from src.core.config import settings
+from src.core.logger import logger
 
-from google.protobuf.empty_pb2 import Empty
-from src.domain.users.value_objects.password_hash import PasswordHash
-from src.infrastructure.database.repositories.user_repository import PostgresUserRepository
-from grpc import StatusCode
-from dependency_injector.wiring import inject, Provide
-from concurrent import futures
-import grpc
-from grpc import ServicerContext
-import signal
-import asyncio
 
 class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
     @inject
@@ -38,7 +29,7 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
     ):
         self._register_uc = register_uc
         self._change_uc = change_password_uc
-        self._auth_us = auth_uc
+        self._auth_uc = auth_uc
 
     async def RegisterUser(self, request, context):
         try:
@@ -51,6 +42,8 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
 
         except ValueObjectException as e:
             await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
+        except (UsernameAlreadyExistsError, EmailAlreadyExistsError) as e:
+            await context.abort(StatusCode.ALREADY_EXISTS, str(e))
         except Exception as e:
             await context.abort(StatusCode.INTERNAL, f"Internal error: {e}")
 
