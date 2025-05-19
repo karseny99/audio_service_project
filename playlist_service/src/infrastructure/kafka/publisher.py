@@ -1,15 +1,14 @@
 from faststream.kafka import KafkaBroker
+from contextlib import asynccontextmanager
 from google.protobuf.message import Message
 import asyncio
-from contextlib import asynccontextmanager
 
 from src.core.config import settings
 from src.core.logger import logger
 
-from src.domain.events.events import UserEvent
+from src.domain.events.events import PlaylistEvent
 from src.domain.events.publisher import EventPublisher
 from src.infrastructure.events.base_converter import BaseEventConverter
-
 
 class KafkaEventPublisher(EventPublisher):
     def __init__(self, broker: KafkaBroker, destination: list[str], converters: BaseEventConverter):
@@ -52,7 +51,7 @@ class KafkaEventPublisher(EventPublisher):
         finally:
             pass  # Не закрываем соединение явно, чтобы переиспользовать
 
-    async def publish(self, event: UserEvent, key: str | None = None):
+    async def publish(self, event: PlaylistEvent, key: str | None = None):
         """Публикация сообщения с гарантированным подключением"""
         try:
             async with self.get_producer() as producer:   

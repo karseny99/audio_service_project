@@ -7,6 +7,17 @@ while ! kafka-topics.sh --list --bootstrap-server kafka:9092 >/dev/null 2>&1; do
   sleep 5
 done
 
+
+echo "Creating system topics..."
+
+kafka-topics.sh --create \
+  --bootstrap-server kafka:9092 \
+  --topic __transaction_state \
+  --partitions 50 \
+  --replication-factor 1 \
+  --config cleanup.policy=compact
+
+
 echo "Creating topics..."
 # Создаем топики с явным указанием всех параметров
 topics=(

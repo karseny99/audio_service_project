@@ -1,8 +1,10 @@
 import asyncio
+from functools import wraps
+
 from src.infrastructure.grpc.server import serve_grpc
+from src.infrastructure.kafka.consumer import KafkaConsumer
 from src.core.di import Container
 from src.core.logger import logger
-from functools import wraps
 
 def di_raii(main_func):
     @wraps(main_func)
@@ -33,14 +35,13 @@ def di_raii(main_func):
 async def main():
     container = Container()
     container.wire(modules=["src.infrastructure.grpc.server"])
-    
+
+    consumer = await container.kafka_consumer().start()
+
     await asyncio.gather(
-        serve_grpc(),
-        # тут еще консумер должен быть
+        serve_grpc(),  # gRPC-сервер
+        asyncio.Future(),  # infinite cycle
     )
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Application shutdown by user")
+    asyncio.run(main())

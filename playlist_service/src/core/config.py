@@ -1,24 +1,26 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import ClassVar
-import re
 import os
+from typing import Optional
 
 class Settings(BaseSettings):
-    
-    BCRYPT_SALT: ClassVar[str] = "$2b$12$ABCDEFGHIJKLMNOPQRSTUV"
-
     BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     ENV: str = "local"  # local/stage/prod
     
     # gRPC server
     GRPC_HOST: str = '[::]' # all interfaces
-    GRPC_PORT: str = '50051'
+    GRPC_PORT: str = '50052'
+
+    # gRPC client
+    GRPC_TRACK_SERVICE_HOST: str = 'localhost'
+    GRPC_TRACK_SERVICE_PORT: str = '50053'
+    GRPC_TIMEOUT: int = 5 # seconds
+    
 
     # Redis
-    REDIS_HOST: str = 'localhost'
-    REDIS_PORT: int = 6379
-    REDIS_PASSWORD: str = '1'
-    REDIS_DB: int = 0
+    # REDIS_HOST: str
+    # REDIS_PORT: int
+    # REDIS_PASSWORD: str
+    # REDIS_DB: int = 0
     
     # PostgreSQL
     POSTGRES_HOST: str = 'localhost'
@@ -31,10 +33,7 @@ class Settings(BaseSettings):
     EVENT_HEADER: str = 'event-type'
     KAFKA_BOOTSTRAP_SERVERS: str = 'localhost:29092'
     # KAFKA_BOOTSTRAP_SERVERS: str = 'kafka:9092' # in docker network
-    KAFKA_USER_CONTEXT_TOPIC: str = 'user-topic'
     KAFKA_PLAYLIST_CONTEXT_TOPIC: str = 'playlist-topic'
-    KAFKA_LISTENING_HISTORY_CONTEXT_TOPIC: str = 'listening-history-topic'
-
     # KAFKA_SECURITY_PROTOCOL: Optional[str] = None
     # KAFKA_SASL_MECHANISM: Optional[str] = None
     # KAFKA_SASL_USERNAME: Optional[str] = None
@@ -46,12 +45,12 @@ class Settings(BaseSettings):
     #     extra='ignore'
     # )
     
-    @property
-    def REDIS_URL(self) -> str:
+    def get_redis_url(self, use_ssl: bool = True) -> str:
         """
             Returns redis url 
         """
-        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}"
+        scheme = "rediss" if use_ssl else "redis"
+        return f"{scheme}://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
     
     def get_postgres_url(self, async_mode: bool = True) -> str:
         """
@@ -78,9 +77,14 @@ class Settings(BaseSettings):
 
     def get_grpc_url(self) -> str:
         """
-            Returns grpc url 
+            Returns its grpc server's url 
         """
-        grpc_url = f"{self.GRPC_HOST}:{self.GRPC_PORT}"
-        return grpc_url
+        return f"{self.GRPC_HOST}:{self.GRPC_PORT}"
+    
+    def get_grpc_music_service_url(self) -> str:
+        '''
+            Returns grpc url of music service
+        '''
+        return f"{self.GRPC_TRACK_SERVICE_HOST}:{self.GRPC_TRACK_SERVICE_PORT}"
 
 settings = Settings()
