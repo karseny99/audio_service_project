@@ -1,5 +1,5 @@
 from dependency_injector import containers, providers
-from src.services.user_service import get_user_command_stub
+from src.core.dependencies.grpc_clients import get_user_command_stub
 
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(

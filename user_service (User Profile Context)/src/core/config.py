@@ -1,8 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import ClassVar
+import re
 import os
-from typing import Optional
 
 class Settings(BaseSettings):
+    
+    BCRYPT_SALT: ClassVar[str] = "$2b$12$ABCDEFGHIJKLMNOPQRSTUV"
+
     BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     ENV: str = "local"  # local/stage/prod
     
@@ -11,10 +15,10 @@ class Settings(BaseSettings):
     GRPC_PORT: str = '50051'
 
     # Redis
-    # REDIS_HOST: str
-    # REDIS_PORT: int
-    # REDIS_PASSWORD: str
-    # REDIS_DB: int = 0
+    REDIS_HOST: str = 'localhost'
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = '1'
+    REDIS_DB: int = 0
     
     # PostgreSQL
     POSTGRES_HOST: str = 'localhost'
@@ -42,12 +46,12 @@ class Settings(BaseSettings):
     #     extra='ignore'
     # )
     
-    def get_redis_url(self, use_ssl: bool = True) -> str:
+    @property
+    def REDIS_URL(self) -> str:
         """
             Returns redis url 
         """
-        scheme = "rediss" if use_ssl else "redis"
-        return f"{scheme}://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}"
     
     def get_postgres_url(self, async_mode: bool = True) -> str:
         """

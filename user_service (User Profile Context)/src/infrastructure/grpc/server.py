@@ -1,45 +1,86 @@
-from src.core.config import settings
-from src.core.logger import logger
-from src.applications.use_cases.register_user import RegisterUserUseCase
-from src.core.protos.generated import commands_pb2
-from src.core.protos.generated import commands_pb2_grpc
+from google.protobuf.empty_pb2 import Empty
+from grpc import StatusCode
+from dependency_injector.wiring import inject, Provide
+import grpc
+import asyncio
+
+from src.core.di import Container
+from src.core.protos.generated import commands_pb2, commands_pb2_grpc
 from src.core.di import Container
 from src.core.exceptions import (
     ValueObjectException,
-    EmailAlreadyExistsError,
+    UserNotFoundError,
+    InvalidPasswordError,
+    EmailAlreadyExistsError, 
     UsernameAlreadyExistsError
 )
 
-from dependency_injector.wiring import inject, Provide
-from concurrent import futures
-import grpc
-from grpc import ServicerContext
-import signal
-import asyncio
+from src.core.config import settings
+from src.core.logger import logger
+
 
 class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
     @inject
     def __init__(
-        self,
-        register_use_case: RegisterUserUseCase = Provide[Container.register_use_case]
+            self,
+            register_uc = Provide[Container.register_use_case],
+            change_password_uc = Provide[Container.change_password_use_case],
+            auth_uc = Provide[Container.auth_user_use_case],
     ):
-        self.register_use_case = register_use_case
-    
-    async def RegisterUser(self, request, context: ServicerContext):
+        self._register_uc = register_uc
+        self._change_uc = change_password_uc
+        self._auth_uc = auth_uc
+
+    async def RegisterUser(self, request, context):
         try:
-            user_id = await self.register_use_case.execute(
+            user_id = await self._register_uc.execute(
                 email=request.email,
                 password=request.password,
                 username=request.username
             )
             return commands_pb2.RegisterUserResponse(user_id=user_id)
+
+        except ValueObjectException as e:
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
+        except (UsernameAlreadyExistsError, EmailAlreadyExistsError) as e:
+            await context.abort(StatusCode.ALREADY_EXISTS, str(e))
+        except Exception as e:
+            await context.abort(StatusCode.INTERNAL, f"Internal error: {e}")
+
+    async def AuthenticateUser(self, request, context):
+        try:
+            user_id = await self._auth_uc.execute(
+                username=request.username,
+                password=request.password,
+            )
+            return commands_pb2.AuthenticateUserResponse(user_id=user_id)
         
         except ValueObjectException as e:
-            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
-        except (EmailAlreadyExistsError, UsernameAlreadyExistsError) as e:
-            await context.abort(grpc.StatusCode.ALREADY_EXISTS, str(e)) 
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
+        except UserNotFoundError as e:            
+            await context.abort(StatusCode.NOT_FOUND, str(e))
+        except InvalidPasswordError as e:
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
         except Exception as e:
-            await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {str(e)}")
+            await context.abort(StatusCode.INTERNAL, f"Internal error: {e}")
+
+
+    async def ChangePassword(self, request, context):
+        try:
+            await self._change_uc.execute(
+                user_id=int(request.user_id),
+                old_password=request.old_password,
+                new_password=request.new_password
+            )
+            return Empty()
+
+        except UserNotFoundError:
+            await context.abort(StatusCode.NOT_FOUND, "User not found")
+        except InvalidPasswordError as e:
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
+        except Exception as ex:
+            logger.exception("Unexpected error in ChangePassword")
+            await context.abort(StatusCode.INTERNAL, "Internal server error")
 
 
 async def serve_grpc():

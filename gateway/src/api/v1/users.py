@@ -1,26 +1,44 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from dependency_injector.wiring import inject, Provide
-import grpc
+from pydantic import BaseModel
+from src.services.user_service import change_password
+from src.schemas.user import ChangePasswordRequest, ChangePasswordResponse
 
-from src.core.container import Container
-from src.services.user_service import register_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.post("/register")
+@router.post(
+    "/change-password",
+    summary="Change own password",
+    status_code=status.HTTP_200_OK
+)
 @inject
-async def register_user_endpoint(
-    username: str,
-    email: str,
-    password: str,
-    stub=Depends(Provide[Container.user_stub]),
+async def change_password_endpoint(
+        payload: ChangePasswordRequest,
+        request: Request,  # от AuthMiddleware в state.user_id
 ):
+    user_id: str = request.state.user_id
     try:
-        user_id = register_user(username, email, password)
-        return {"status": "created", "user_id": user_id}
-    except grpc.RpcError as e:
-        # сюда попадут INVALID_ARGUMENT / ALREADY_EXISTS и т.д.
-        code = e.code()
-        if code.name in ("INVALID_ARGUMENT", "ALREADY_EXISTS"):
-            raise HTTPException(status_code=400, detail=e.details())
-        raise HTTPException(status_code=502, detail="UserService unavailable")
+        change_password(
+            user_id=user_id,
+            old_password=payload.old_password,
+            new_password=payload.new_password
+        )
+        resp = ChangePasswordResponse(
+            status="password_changed"
+        )
+        return resp
+    
+    except ValueError as e:
+        # сюда попадут Invalid creds или Not found
+        detail = str(e)
+        code = status.HTTP_400_BAD_REQUEST
+        if "не найден" in detail.lower():
+            code = status.HTTP_404_NOT_FOUND
+        raise HTTPException(status_code=code, detail=detail)
+    except RuntimeError as e:
+        # сервис недоступен
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e)
+        )

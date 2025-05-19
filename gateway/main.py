@@ -39,22 +39,34 @@
 '''
 
 from src.services.user_service import register_user
+from src.core.middleware.auth import AuthMiddleware
 import random
 
 
 from fastapi import FastAPI
 from src.core.container import Container
+from src.api.v1.auth import router as auth_router
 from src.api.v1.users import router as users_router
 import uvicorn
 
 app = FastAPI(title="API Gateway")
 container = Container()
 app.container = container
+app.include_router(auth_router)
 app.include_router(users_router)
+app.add_middleware(AuthMiddleware)
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=8000, log_level="info")
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+        access_log=True,
+        reload=True,
+    )
 
 # if __name__ == "__main__":
 #     user_id = register_user(

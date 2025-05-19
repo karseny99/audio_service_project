@@ -18,8 +18,10 @@ class RegisterUserUseCase:
 
     async def execute(self, email: str, password: str, username: str) -> int:
         if await self._repo.get_by_email(email=email):
+            logger.debug(f"{email} exists")
             raise EmailAlreadyExistsError("Email exists")
         if await self._repo.get_by_username(username=username):
+            logger.debug(f"{username} exists")
             raise UsernameAlreadyExistsError("Username exists")
         
         user = self._service.register_user(
