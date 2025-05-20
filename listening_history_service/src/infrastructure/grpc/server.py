@@ -1,7 +1,7 @@
 from src.core.config import settings
 from src.core.logger import logger
 from src.core.protos.generated import LikeCommands_pb2_grpc
-from listening_history_service.src.applications.use_cases.like_track import LikeTrackUseCase
+from src.applications.use_cases.like_track import LikeTrackUseCase
 from src.core.di import Container
 from src.core.exceptions import (
     ValueObjectException,
@@ -43,7 +43,7 @@ class LikeCommandService(LikeCommands_pb2_grpc.LikeCommandServiceServicer):
 
 
 async def serve_grpc():
-   
+
     server = grpc.aio.server()
     LikeCommands_pb2_grpc.add_LikeCommandServiceServicer_to_server(
         LikeCommandService(), server

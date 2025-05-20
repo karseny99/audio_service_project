@@ -46,7 +46,7 @@ class PostgresUserLikesRepository(UserLikesRepository):
         return result.scalar_one_or_none() is not None
 
     @ConnectionDecorator(isolation_level="READ COMMITTED")
-    async def get_likes(self, user_id: UserId, session: Optional[AsyncSession] = None) -> List[UserLike]:
+    async def get_user_likes(self, user_id: UserId, session: Optional[AsyncSession] = None) -> List[UserLike]:
         stmt = select(UserLikeORM).where(
             UserLikeORM.user_id == user_id
         ).order_by(UserLikeORM.liked_at.desc())

@@ -11,7 +11,7 @@ class Base(DeclarativeBase):
 
 class UserLikeORM(Base):
     __tablename__ = 'user_likes'
-    __table_args__ = {'schema': 'likes'}
+    __table_args__ = {'schema': 'listening_history'}
     
     user_id: Mapped[int] = mapped_column(
         BigInteger,

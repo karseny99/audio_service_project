@@ -6,25 +6,25 @@ from src.infrastructure.kafka.consumer import KafkaConsumer
 from src.core.di import Container
 from src.core.logger import logger
 
-def with_kafka_cleanup(main_func):
-    @wraps(main_func)
-    async def wrapper():
-        container = Container()
-        try:
-            await main_func()
-        finally:
-            publisher = container.kafka_publisher()
-            await publisher.disconnect()
-            logger.info("Kafka publisher disconnected")
-    return wrapper
+# def with_kafka_cleanup(main_func):
+#     @wraps(main_func)
+#     async def wrapper():
+#         container = Container()
+#         try:
+#             await main_func()
+#         finally:
+#             publisher = container.kafka_publisher()
+#             await publisher.disconnect()
+#             logger.info("Kafka publisher disconnected")
+#     return wrapper
 
 
-@with_kafka_cleanup
+# @with_kafka_cleanup
 async def main():
     container = Container()
     container.wire(modules=["src.infrastructure.grpc.server"])
 
-    consumer = await container.kafka_consumer().start()
+    # consumer = await container.kafka_consumer().start()
 
     await asyncio.gather(
         serve_grpc(),  # gRPC-сервер

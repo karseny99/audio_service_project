@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
-from src.domain.user_likes.models import UserLikes
+from src.domain.user_likes.models import UserLike
 
 class UserLikesRepository(ABC):
     @abstractmethod
