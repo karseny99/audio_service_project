@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "playlist service"
+name = "listening history service"
 version = "0.1.0"
 description = ""
 authors = ["karseny99 <arseny.karimov@gmail.com>"]

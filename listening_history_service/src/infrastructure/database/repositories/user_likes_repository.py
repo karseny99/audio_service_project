@@ -4,12 +4,12 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from src.core.config import settings
+from src.core.logger import logger
 from src.infrastructure.database.repositories.database import ConnectionDecorator
 from src.domain.user_likes.repository import UserLikesRepository
 from src.domain.user_likes.models import UserLike
 from src.infrastructure.database.models import UserLikeORM
 from src.domain.user_likes.value_objects import UserId, TrackId
-from src.core.exceptions import TrackAlreadyLiked
 
 
 class PostgresUserLikesRepository(UserLikesRepository):
@@ -28,7 +28,9 @@ class PostgresUserLikesRepository(UserLikesRepository):
         # Проверяем, не существует ли уже такого лайка
         existing_like = await session.get(UserLikeORM, (user_id, track_id))
         if existing_like:
-            raise TrackAlreadyLiked(f"User {user_id} already liked track {track_id}")
+            logger.debug(f"User {user_id} already liked track {track_id}")
+            return
+            # raise TrackAlreadyLiked(f"User {user_id} already liked track {track_id}")
 
         new_like = UserLikeORM(
             user_id=user_id,

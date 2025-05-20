@@ -32,8 +32,6 @@ class LikeCommandService(LikeCommands_pb2_grpc.LikeCommandServiceServicer):
             )
             return empty_pb2.Empty()
 
-        except InsufficientPermission as e:
-            await context.abort(grpc.StatusCode.PERMISSION_DENIED, str(e))
         except ValueObjectException as e:
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
         except TrackNotFoundError as e:

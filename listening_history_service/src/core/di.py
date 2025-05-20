@@ -47,11 +47,6 @@ class Container(containers.DeclarativeContainer):
         LikeTrackUseCase,
         likes_repo=user_likes_repository,
         track_service=track_service_client,
-        # event_publisher=kafka_publisher
-
-        # playlist_repo=playlist_repository,
-        # track_service=track_service_client,
-        # event_publisher=kafka_publisher
     )
 
     # handle_user_deleted_use_case = providers.Factory(

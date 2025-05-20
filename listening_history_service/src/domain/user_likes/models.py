@@ -1,9 +1,7 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
 
 from src.domain.user_likes.value_objects import TrackId, UserId
-from src.core.exceptions import TrackAlreadyLiked
 
 
 @dataclass(frozen=True)
