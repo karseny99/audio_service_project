@@ -1,0 +1,13 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+
+message LikeTrackRequest {
+  int64 track_id = 1;
+  int64 user_id = 2;
+}
+
+service LikeCommandService {
+  rpc LikeTrack (LikeTrackRequest) returns (google.protobuf.Empty);
+}
+
