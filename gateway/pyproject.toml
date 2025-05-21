@@ -15,10 +15,7 @@ dependency-injector = "^4.46.0"
 uvicorn = "^0.34.2"
 grpcio = "^1.71.0"
 grpcio-tools = "^1.71.0"
-fastapi = "^0.115.12"
-dependency-injector = "^4.46.0"
 pydantic = {extras = ["email"], version = "^2.11.4"}
-uvicorn = "^0.34.2"
 passlib = "^1.7.4"
 PyJWT = "^2.10.1"
 
