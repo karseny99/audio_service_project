@@ -55,6 +55,23 @@ class PostgresMusicRepository(MusicRepository):
         return [self._convert_to_domain(track) for track in result.scalars()]
 
     @ConnectionDecorator()
+    async def get_by_genre(self, genre_id: int, offset: int = 0, limit: int = 50, session: AsyncSession | None = None) -> list[Track]:
+        stmt = (
+            select(TrackORM)
+            .join(TrackORM.genres)
+            .options(
+                selectinload(TrackORM.artists).selectinload(TrackArtistORM.artist),
+                selectinload(TrackORM.genres).selectinload(TrackGenreORM.genre)
+            )
+            .where(TrackGenreORM.genre_id == genre_id)
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await session.execute(stmt)
+        return [self._convert_to_domain(track) for track in result.scalars()]
+
+
+    @ConnectionDecorator()
     async def add(self, track: Track, session: AsyncSession | None = None) -> Track:
         track_orm = TrackORM(
             track_id=track.track_id,

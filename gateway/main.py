@@ -47,6 +47,7 @@ from fastapi import FastAPI
 from src.core.container import Container
 from src.api.v1.auth import router as auth_router
 from src.api.v1.users import router as users_router
+from src.api.v1.tracks import router as tracks_router
 import uvicorn
 
 app = FastAPI(title="API Gateway")
@@ -54,6 +55,7 @@ container = Container()
 app.container = container
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(tracks_router)
 app.add_middleware(AuthMiddleware)
 
 

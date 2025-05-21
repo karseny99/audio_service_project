@@ -9,7 +9,6 @@ generate:
 		--pyi_out=./src/core/protos/generated \
 		./src/core/protos/TrackCommands.proto
 	
-	# Генерируем код для PlaylistCommands
 	poetry run python3 -m grpc_tools.protoc \
 		-I./src/core/protos \
 		--python_out=./src/core/protos/generated \

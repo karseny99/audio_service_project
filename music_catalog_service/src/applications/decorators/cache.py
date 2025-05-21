@@ -32,6 +32,11 @@ def cached(
             else:
                 cache_key = key_template.format(*args, **kwargs)
             
+            cache_key = key_template.format(
+                *args, 
+                **{k: v for k, v in kwargs.items() if k not in ['self']}
+            )
+
             # Проверка кэша
             cached_data = await cache_repo.get(cache_key)
             if cached_data is not None:

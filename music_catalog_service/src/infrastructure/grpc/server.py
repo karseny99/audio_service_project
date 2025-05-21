@@ -82,6 +82,29 @@ class TrackCommamdService(TrackCommands_pb2_grpc.TrackServiceServicer):
             await context.abort(grpc.StatusCode.INTERNAL, str(e))
 
 
+    async def GetTracksByArtist(self, request, context):
+        try:
+            tracks = await self._get_tracks_by_artist_use_case.execute(
+                artist_id=request.artist_id,
+                offset=request.offset,
+                limit=request.limit
+            )
+            return self._convert_tracks_to_proto(tracks)
+        
+        except Exception as e:
+            raise e
+        
+    async def GetTracksByGenre(self, request, context):
+        try:
+            tracks = await self._get_tracks_by_genre_use_case.execute(
+                genre_id=request.genre_id,
+                offset=request.offset,
+                limit=request.limit
+            )
+            return self._convert_tracks_to_proto(tracks)
+        except Exception as e:
+            raise e
+
 async def serve_grpc():
    
     server = grpc.aio.server()

@@ -13,7 +13,8 @@ dependency-injector = "^4.46.0"
 SQLAlchemy = "^2.0.41"
 asyncpg = "^0.30.0"
 faststream = {extras = ["kafka"], version = "^0.5.40"}
-aioredis = "^2.0.1"
+setuptools = "^80.8.0"
+aioredis = ">=4.5.0"
 
 [tool.poetry.dev-dependencies]
 

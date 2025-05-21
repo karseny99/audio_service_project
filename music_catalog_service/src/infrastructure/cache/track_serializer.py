@@ -16,7 +16,17 @@ class TrackSerializer(CacheSerializer):
     def __init__(self, base_serializer: CacheSerializer):
         self._base = base_serializer
 
-    def serialize(self, track: Optional['Track']) -> bytes:
+    def serialize(self, tracks: Optional[list['Track']]) -> bytes:
+        if tracks is None:
+            return self._base.serialize(None)
+        return self._base.serialize([self._serialize_track(t) for t in tracks])
+
+    def deserialize(self, data: bytes, target_type: Type) -> list['Track']:
+        decoded = self._base.deserialize(data, list)
+        return [self._deserialize_track(t) for t in decoded]
+
+
+    def _serialize_track(self, track: Optional['Track']) -> bytes:
         if track is None:
             return self._base.serialize(None)
         
@@ -33,7 +43,7 @@ class TrackSerializer(CacheSerializer):
         }
         return self._base.serialize(track_dict)
 
-    def deserialize(self, data: bytes, target_type: Type[Optional['Track']]) -> Optional['Track']:
+    def _deserialize_track(self, data: bytes, target_type: Type[Optional['Track']]) -> Optional['Track']:
         if data is None:
             return None
             

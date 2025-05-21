@@ -1,5 +1,5 @@
-import aioredis
-from typing import Optional
+import redis.asyncio as redis
+from typing import Optional, Any
 import asyncio
 
 from src.core.config import settings
@@ -18,7 +18,7 @@ class RedisClient:
     
     async def connect(self):
         if self._redis is None:
-            self._redis = await aioredis.from_url(
+            self._redis = redis.from_url(
                 self._url,
                 encoding="utf-8",
                 decode_responses=False
@@ -33,7 +33,7 @@ class RedisClient:
     async def get(self, key: str) -> Optional[bytes]:
         return await self._redis.get(key)
 
-    async def set(self, key: str, value: bytes, ex: int = None) -> None:
+    async def set(self, key: str, value: Any, ex: int = None) -> None:
         await self._redis.set(key, value, ex=ex)
 
     @property
