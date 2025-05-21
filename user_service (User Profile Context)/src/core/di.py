@@ -45,6 +45,7 @@ class Container(containers.DeclarativeContainer):
     )
 
     kafka_publisher = providers.Singleton(
+        KafkaEventPublisher,
         broker=kafka_broker,
         destination=settings.KAFKA_USER_CONTEXT_TOPIC, # just to fill the argument
         converters=UserEventConverters,
