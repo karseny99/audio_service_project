@@ -26,10 +26,12 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
             register_uc = Provide[Container.register_use_case],
             change_password_uc = Provide[Container.change_password_use_case],
             auth_uc = Provide[Container.auth_user_use_case],
+            get_user_info_uc = Provide[Container.get_user_info_use_case]
     ):
         self._register_uc = register_uc
         self._change_uc = change_password_uc
         self._auth_uc = auth_uc
+        self._get_user_info_uc = get_user_info_uc
 
     async def RegisterUser(self, request, context):
         try:
@@ -81,6 +83,22 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
         except Exception as ex:
             logger.exception("Unexpected error in ChangePassword")
             await context.abort(StatusCode.INTERNAL, "Internal server error")
+
+    async def GetUserInfo(self, request, context):
+        try:
+            user_info= await self._get_user_info_uc.execute(user_id=request.user_id)
+            return commands_pb2.GetUserInfoResponse(            
+                username=user_info["username"],
+                email=user_info["email"],
+                created_at=user_info["created_at"]
+            )
+        
+        except ValueObjectException as e:
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
+        except UserNotFoundError as e:            
+            await context.abort(StatusCode.NOT_FOUND, str(e))
+        except Exception as e:
+            await context.abort(StatusCode.INTERNAL, f"Internal error: {e}")
 
 
 async def serve_grpc():

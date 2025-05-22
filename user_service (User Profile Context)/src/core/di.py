@@ -12,6 +12,7 @@ from src.domain.users.services import UserRegistrationService
 from src.applications.use_cases.register_user import RegisterUserUseCase
 from src.applications.use_cases.change_password import ChangePasswordUseCase
 from src.applications.use_cases.auth_user import AuthUserUseCase
+from src.applications.use_cases.get_user_info import GetUserInfoUseCase
 
 from src.infrastructure.cache.serialization import DomainJsonSerializer
 from src.infrastructure.cache.user_serializer import UserSerializer, SimpleSerializer
@@ -126,6 +127,13 @@ class Container(containers.DeclarativeContainer):
 
     auth_user_use_case = providers.Factory(
         AuthUserUseCase,
+        user_repo=user_repository,
+        cache_repo=cache_repository,
+        cache_serializer=simple_serializer
+    )
+
+    get_user_info_use_case = providers.Factory(
+        GetUserInfoUseCase,
         user_repo=user_repository,
         cache_repo=cache_repository,
         cache_serializer=simple_serializer
