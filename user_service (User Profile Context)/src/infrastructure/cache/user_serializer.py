@@ -47,7 +47,7 @@ class UserSerializer(CacheSerializer):
             
             # Создаем пользователя
             return target_type(
-                id=int(decoded['id']),
+                id=int(decoded['user_id']),
                 email=email,
                 username=username,
                 password_hash=password_hash,

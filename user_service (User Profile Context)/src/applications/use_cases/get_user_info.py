@@ -1,6 +1,3 @@
-from datetime import datetime
-from google.protobuf.timestamp_pb2 import Timestamp
-
 from src.domain.users.repository import UserRepository
 from src.domain.cache.cache_repository import CacheRepository, CacheTTL
 from src.domain.cache.serialization import CacheSerializer
