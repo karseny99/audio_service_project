@@ -18,6 +18,7 @@ from src.core.exceptions import (
 from src.core.config import settings
 from src.core.logger import logger
 
+from google.protobuf import timestamp_pb2
 
 class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
     @inject
@@ -86,11 +87,16 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
 
     async def GetUserInfo(self, request, context):
         try:
-            user_info= await self._get_user_info_uc.execute(user_id=request.user_id)
+            user = await self._get_user_info_uc.execute(user_id=request.user_id)
+
+            created_at = timestamp_pb2.Timestamp()
+            created_at.FromDatetime(user.created_at)
+            
             return commands_pb2.GetUserInfoResponse(            
-                username=user_info["username"],
-                email=user_info["email"],
-                created_at=user_info["created_at"]
+                user_id = user.id,
+                username = user.username,
+                email = user.email,
+                created_at = created_at
             )
         
         except ValueObjectException as e:

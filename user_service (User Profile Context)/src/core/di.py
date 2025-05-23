@@ -136,7 +136,7 @@ class Container(containers.DeclarativeContainer):
         GetUserInfoUseCase,
         user_repo=user_repository,
         cache_repo=cache_repository,
-        cache_serializer=simple_serializer
+        cache_serializer=user_serializer
     )
 
     @classmethod
