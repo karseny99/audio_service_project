@@ -16,34 +16,58 @@ from grpc import ServicerContext
 from google.protobuf import empty_pb2, timestamp_pb2
 import asyncio
 
+from src.core.protos.generated import TrackCommands_pb2, TrackCommands_pb2_grpc
+from src.core.di import Container
+from src.applications.use_cases.get_tracks import (
+    GetTracksByArtistUseCase,
+    GetTracksByGenreUseCase
+)
+from google.protobuf.timestamp_pb2 import Timestamp
 
-class TrackCommamdService(TrackCommands_pb2_grpc.TrackServiceServicer):
-    @inject
-    def __init__(
-        self,
-        # add_track_use_case: AddTrackToPlaylistUseCase = Provide[Container.add_track_use_case]
-        get_track_use_case: GetTrackUseCase = Provide[Container.get_track_use_case]
-    ):
-        # self._add_track_use_case = add_track_use_case
-        self._get_track_use_case = get_track_use_case
-    
-    # async def AddTrackToPlaylist(self, request, context: ServicerContext):
-    #     try:
-    #         await self._add_track_use_case.execute(
-    #             playlist_id=request.playlist_id,
-    #             track_id=request.track_id,
-    #             user_id=request.user_id  # из JWT
-    #         )
-    #         return empty_pb2.Empty()
+class TrackQueryService(TrackCommands_pb2_grpc.TrackQueryServiceServicer):
+    def __init__(self):
+        self._get_tracks_by_artist_uc = Container.get_tracks_by_artist_use_case()
+        self._get_tracks_by_genre_uc = Container.get_tracks_by_genre_use_case()
 
-    #     except InsufficientPermission as e:
-    #         await context.abort(grpc.StatusCode.PERMISSION_DENIED, str(e))
-    #     except ValueObjectException as e:
-    #         await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
-    #     except TrackNotFoundError as e:
-    #         await context.abort(grpc.StatusCode.NOT_FOUND, str(e))
-    #     except Exception as e:
-    #         await context.abort(grpc.StatusCode.INTERNAL, str(e))
+    async def GetTracksByArtist(self, request, context):
+        try:
+            tracks = await self._get_tracks_by_artist_uc.execute(
+                artist_id=request.artist_id,
+                offset=request.pagination.offset,
+                limit=request.pagination.limit
+            )
+            
+            return TrackCommands_pb2.TrackListResponse(
+                tracks=[self._convert_track_to_proto(track) for track in tracks],
+                pagination=TrackCommands_pb2.Pagination(
+                    total=len(tracks),
+                    offset=request.pagination.offset,
+                    limit=request.pagination.limit
+                )
+            )
+        except Exception as e:
+            await context.abort(grpc.StatusCode.INTERNAL, str(e))
+
+            
+    async def GetTracksByGenre(self, request, context):
+        
+        try:
+            tracks = await self._get_tracks_by_genre_uc.execute(
+                genre_id=request.genre_id,
+                offset=request.pagination.offset,
+                limit=request.pagination.limit
+            )
+            
+            return TrackCommands_pb2.TrackListResponse(
+                tracks=[self._convert_track_to_proto(track) for track in tracks],
+                pagination=TrackCommands_pb2.Pagination(
+                    total=len(tracks),
+                    offset=request.pagination.offset,
+                    limit=request.pagination.limit
+                )
+            )
+        except Exception as e:
+            await context.abort(grpc.StatusCode.INTERNAL, str(e))
 
     async def GetTrack(self, request, context: ServicerContext):
         try:
@@ -81,38 +105,14 @@ class TrackCommamdService(TrackCommands_pb2_grpc.TrackServiceServicer):
         except Exception as e:
             await context.abort(grpc.StatusCode.INTERNAL, str(e))
 
-
-    async def GetTracksByArtist(self, request, context):
-        try:
-            tracks = await self._get_tracks_by_artist_use_case.execute(
-                artist_id=request.artist_id,
-                offset=request.offset,
-                limit=request.limit
-            )
-            return self._convert_tracks_to_proto(tracks)
-        
-        except Exception as e:
-            raise e
-        
-    async def GetTracksByGenre(self, request, context):
-        try:
-            tracks = await self._get_tracks_by_genre_use_case.execute(
-                genre_id=request.genre_id,
-                offset=request.offset,
-                limit=request.limit
-            )
-            return self._convert_tracks_to_proto(tracks)
-        except Exception as e:
-            raise e
-
 async def serve_grpc():
    
     server = grpc.aio.server()
-    TrackCommands_pb2_grpc.add_TrackServiceServicer_to_server(
-        TrackCommamdService(), server
+    TrackCommands_pb2_grpc.add_TrackQueryServiceServicer_to_server(
+        TrackQueryService(), server
     )
     server.add_insecure_port(settings.get_grpc_url())
-    
+
     await server.start()
     logger.info(f"gRPC server started on {settings.get_grpc_url()}")
     

@@ -1,43 +1,70 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from src.protos.user_context.generated.track_pb2 import (
+    GetTracksByArtistRequest,
+    GetTracksByGenreRequest,
+    Pagination
+)
+from fastapi import APIRouter, Depends, HTTPException
 from dependency_injector.wiring import inject, Provide
 from src.core.container import Container
-from src.services.music_catalog_service import (
-    get_tracks_by_artist,
-    get_tracks_by_genre
+from src.schemas.track import (
+    TracksByArtistRequest,
+    TracksByGenreRequest,
+    TracksPaginationResponse,
+    TrackResponse
 )
 
 router = APIRouter(prefix="/tracks", tags=["Tracks"])
 
-@router.get("/artist/{artist_id}")
+@router.get("/artist", response_model=TracksPaginationResponse)
 @inject
 async def get_tracks_by_artist_endpoint(
-    artist_id: int,
-    offset: int = Query(0, ge=0),
-    limit: int = Query(50, le=100),
+    request: TracksByArtistRequest,
     stub=Depends(Provide[Container.music_catalog_stub])
 ):
     try:
-        response = get_tracks_by_artist(artist_id, offset, limit)
-        return {
-            "tracks": response.tracks,
-            "total": response.total
-        }
+        grpc_request = GetTracksByArtistRequest(
+            artist_id=request.artist_id,
+            pagination=Pagination(
+                offset=request.offset,
+                limit=request.limit
+            )
+        )
+        
+        response = await stub.GetTracksByArtist(grpc_request)
+        
+        return TracksPaginationResponse(
+            tracks=[TrackResponse(**track.__dict__) for track in response.tracks],
+            total=response.pagination.total,
+            offset=request.offset,
+            limit=request.limit
+        )
+    
     except Exception as e:
         raise HTTPException(500, detail=str(e))
 
-@router.get("/genre/{genre_id}")
+@router.get("/genre", response_model=TracksPaginationResponse)
 @inject
 async def get_tracks_by_genre_endpoint(
-    genre_id: int,
-    offset: int = Query(0, ge=0),
-    limit: int = Query(50, le=100),
+    request: TracksByGenreRequest,
     stub=Depends(Provide[Container.music_catalog_stub])
 ):
     try:
-        response = get_tracks_by_genre(genre_id, offset, limit)
-        return {
-            "tracks": response.tracks,
-            "total": response.total
-        }
+        grpc_request = GetTracksByGenreRequest(
+            genre_id=request.genre_id,
+            pagination=Pagination(
+                offset=request.offset,
+                limit=request.limit
+            )
+        )
+        
+        response = await stub.GetTracksByGenre(grpc_request)
+        
+        return TracksPaginationResponse(
+            tracks=[TrackResponse(**track.__dict__) for track in response.tracks],
+            total=response.pagination.total,
+            offset=request.offset,
+            limit=request.limit
+        )
+    
     except Exception as e:
         raise HTTPException(500, detail=str(e))

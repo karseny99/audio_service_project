@@ -2,7 +2,7 @@ import grpc
 from functools import lru_cache
 
 from src.core.config import settings
-from src.protos.user_context.generated import commands_pb2_grpc
+from src.protos.user_context.generated import commands_pb2_grpc, track_pb2_grpc
 
 @lru_cache(maxsize=None)  # Кешируем канал на всё время работы приложения
 def get_user_channel() -> grpc.Channel:
