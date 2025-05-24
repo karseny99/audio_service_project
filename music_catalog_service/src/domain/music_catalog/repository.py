@@ -13,6 +13,11 @@ class MusicRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_by_genre(self, genre_id: int, offset: int = 0, limit: int = 50) -> List[Track]:
+        '''returns tracks by given genre with pagination'''
+        raise NotImplementedError
+
+    @abstractmethod
     async def add(self, track: Track) -> Track:
         raise NotImplementedError
 
