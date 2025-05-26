@@ -110,3 +110,29 @@ def change_password(user_id: str, old_password: str, new_password: str) -> None:
             raise RuntimeError("Сервис пользователей недоступен")
         else:
             raise RuntimeError(f"Ошибка gRPC: {code.name}")
+
+def get_user_info(user_id: int) -> None:
+    """
+    Получает информацию о пользователе через gRPC.
+    Raises:
+      ValueError: если неверные креды
+      RuntimeError: при прочих ошибках
+    """
+
+
+    stub = get_user_command_stub()
+    request = commands_pb2.GetUserInfoRequest(
+        user_id=user_id
+    )
+    try:
+        stub.GetUserInfo(request, timeout=5.0)
+    except RpcError as e:
+        code = e.code()
+        if code == StatusCode.INVALID_ARGUMENT:
+            raise ValueError(f"Ошибка валидации: {e.details()}")
+        elif code == StatusCode.NOT_FOUND:
+            raise ValueError("Пользователь не найден")
+        elif code == StatusCode.UNAVAILABLE:
+            raise RuntimeError("Сервис пользователей недоступен")
+        else:
+            raise RuntimeError(f"Ошибка gRPC: {code.name}")

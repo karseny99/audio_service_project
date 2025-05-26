@@ -31,3 +31,5 @@ class RegisterUserResponse(BaseModel):
     status: str
     user_id: int
 
+class GetUserInfoResponse(BaseModel):
+    status : str
