@@ -28,6 +28,7 @@ class TrackQueryService(TrackCommands_pb2_grpc.TrackQueryServiceServicer):
     def __init__(self):
         self._get_tracks_by_artist_uc = Container.get_tracks_by_artist_use_case()
         self._get_tracks_by_genre_uc = Container.get_tracks_by_genre_use_case()
+        # self._get_track_uc = Container.get_track_use_case()
 
     async def GetTracksByArtist(self, request, context):
         try:

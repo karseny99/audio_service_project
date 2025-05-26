@@ -30,7 +30,7 @@ async def get_tracks_by_artist_endpoint(
             )
         )
         
-        response = await stub.GetTracksByArtist(grpc_request)
+        response = stub.GetTracksByArtist(grpc_request)
         
         return TracksPaginationResponse(
             tracks=[TrackResponse(**track.__dict__) for track in response.tracks],
@@ -57,7 +57,7 @@ async def get_tracks_by_genre_endpoint(
             )
         )
         
-        response = await stub.GetTracksByGenre(grpc_request)
+        response = stub.GetTracksByGenre(grpc_request)
         
         return TracksPaginationResponse(
             tracks=[TrackResponse(**track.__dict__) for track in response.tracks],
