@@ -20,7 +20,7 @@ class GetUserInfoUseCase:
         self._cache_serializer = cache_serializer
 
     @cached(ttl=CacheTTL.DEFAULT)
-    async def execute(self, user_id: str) -> User:
+    async def execute(self, user_id: int) -> User:
         logger.debug(f"Fetching info for user {user_id}")
 
         user = await self._repo.get_by_id(user_id)

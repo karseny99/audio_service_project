@@ -53,14 +53,18 @@ async def change_password_endpoint(
 async def get_user_info_endpoint(
         request: Request,  # от AuthMiddleware в state.user_id
 ):
-    # user_id: str = request.state.user_id
-    user_id = int(request.state.user_id)
+    user_id: str = request.state.user_id
+    # user_id = int(request.state.user_id)
     try:
-        get_user_info(
+        user_info = get_user_info(
             user_id=user_id,
         )
         resp = GetUserInfoResponse(
-            status="info_sent"
+            status="info_sent",
+            id = user_id,
+            username = user_info['username'],
+            email = user_info['email'],
+            created_at = user_info['created_at']
         )
         return resp
     

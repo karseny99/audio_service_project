@@ -1,6 +1,7 @@
 # gateway/src/schemas/user.py
 
 from pydantic import BaseModel, EmailStr, constr
+from datetime import datetime
 
 class RegisterUserRequest(BaseModel):
     username: constr(min_length=3, max_length=50)
@@ -33,3 +34,7 @@ class RegisterUserResponse(BaseModel):
 
 class GetUserInfoResponse(BaseModel):
     status : str
+    id: str
+    username: str
+    email: EmailStr
+    created_at : datetime

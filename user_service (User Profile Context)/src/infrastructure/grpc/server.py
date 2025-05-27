@@ -87,11 +87,13 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
 
     async def GetUserInfo(self, request, context):
         try:
-            user = await self._get_user_info_uc.execute(user_id=request.user_id)
+            user = await self._get_user_info_uc.execute(user_id=int(request.user_id))
 
             created_at = timestamp_pb2.Timestamp()
             created_at.FromDatetime(user.created_at)
             
+            print(f"User: {user.id}, {user.username}, {user.email}, {created_at}")
+
             return commands_pb2.GetUserInfoResponse(            
                 user_id = user.id,
                 username = user.username,
