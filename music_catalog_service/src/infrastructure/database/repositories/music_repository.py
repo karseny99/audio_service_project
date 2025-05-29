@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from src.core.config import settings
 from src.core.logger import logger
-from src.domain.music_catalog.models import Track, Genre, ArtistInfo
+from src.domain.music_catalog.models import Track, Genre, ArtistInfo, DurationMs
 from src.domain.music_catalog.repository import MusicRepository
 
 from src.infrastructure.database.models import TrackORM, TrackArtistORM, TrackGenreORM
@@ -145,7 +145,7 @@ class PostgresMusicRepository(MusicRepository):
         return Track(
             track_id=track_orm.track_id,
             title=track_orm.title,
-            duration=track_orm.duration_ms,
+            duration=DurationMs(value=track_orm.duration_ms),
             artists=[
                 ArtistInfo(
                     artist_id=ta.artist.artist_id,
