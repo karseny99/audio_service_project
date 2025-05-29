@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 from faststream.kafka import KafkaBroker
 
 # from src.applications.use_cases.add_track import AddTrackToPlaylistUseCase
+from src.applications.use_cases.get_tracks import GetTracksByArtistUseCase, GetTracksByGenreUseCase
 from src.applications.use_cases.get_track import GetTrackUseCase
 
 from src.infrastructure.database.repositories.music_repository import PostgresMusicRepository
@@ -16,8 +17,10 @@ from src.infrastructure.cache.track_serializer import TrackSerializer
 from src.infrastructure.cache.redis_client import RedisClient
 
 
-from src.core.protos.generated import UserEvents_pb2
+# from src.core.protos.generated import UserEvents_pb2
 from src.core.config import settings
+
+
 
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
@@ -153,6 +156,19 @@ class Container(containers.DeclarativeContainer):
     )
     '''     USE CASE    '''
 
+    get_tracks_by_artist_use_case = providers.Factory(
+        GetTracksByArtistUseCase,
+        music_repo=music_repository,
+        cache_repo=cache_repository,
+        cache_serializer=track_serializer
+    )
+
+    get_tracks_by_genre_use_case = providers.Factory(
+        GetTracksByGenreUseCase,
+        music_repo=music_repository,
+        cache_repo=cache_repository,
+        cache_serializer=track_serializer
+    )
 
 
     @classmethod

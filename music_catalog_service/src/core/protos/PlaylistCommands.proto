@@ -1,0 +1,15 @@
+syntax = "proto3";
+package playlist;
+
+message CreatePlaylistRequest {
+    string user_id = 1;
+    string name = 2;
+}
+
+message PlaylistResponse {
+    string playlist_id = 1;
+}
+
+service PlaylistCommandService {
+    rpc CreatePlaylist(CreatePlaylistRequest) returns (PlaylistResponse);
+}
