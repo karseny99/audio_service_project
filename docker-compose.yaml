@@ -123,6 +123,33 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
+    
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin  # Логин
+      MINIO_ROOT_PASSWORD: password  # Пароль
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Web UI
+    volumes:
+      - minio_data:/data
+    networks:
+      - minio_net
+
+  init-minio:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add minio http://minio:9000 admin password) do echo 'Ждем MinIO...'; sleep 1; done &&
+      /usr/bin/mc mb minio/tracks &&
+      /usr/bin/mc policy set public minio/tracks
+      "
+    networks:
+      - minio_net
 
 
 volumes:
@@ -130,3 +157,8 @@ volumes:
   kafka_data:
   postgres_data:
   redis_data:
+  minio_data:
+
+networks:
+  minio_net:
+    driver: bridge
