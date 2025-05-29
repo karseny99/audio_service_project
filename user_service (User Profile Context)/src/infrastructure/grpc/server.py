@@ -92,12 +92,12 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
             created_at = timestamp_pb2.Timestamp()
             created_at.FromDatetime(user.created_at)
             
-            print(f"User: {user.id}, {user.username}, {user.email}, {created_at}")
+            print(f"User: {type(user.id)}, {type(user.username)}, {type(user.email)}, {type(created_at)}")
 
             return commands_pb2.GetUserInfoResponse(            
-                user_id = user.id,
-                username = user.username,
-                email = user.email,
+                user_id = str(user.id),
+                username = str(user.username),
+                email = str(user.email),
                 created_at = created_at
             )
         
@@ -106,6 +106,7 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
         except UserNotFoundError as e:            
             await context.abort(StatusCode.NOT_FOUND, str(e))
         except Exception as e:
+            print("last exeption")
             await context.abort(StatusCode.INTERNAL, f"Internal error: {e}")
 
 

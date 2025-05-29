@@ -57,17 +57,17 @@ app.include_router(users_router)
 app.add_middleware(AuthMiddleware)
 
 
-# if __name__ == "__main__":
-
-#     uvicorn.run(
-#         "main:app",
-#         host="0.0.0.0",
-#         port=8000,
-#         log_level="info",
-#         access_log=True,
-#         reload=True,
-#     )
-
 if __name__ == "__main__":
-    resp = get_user_info(user_id="3")
-    print(f"Registered user ID: {resp}")
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+        access_log=True,
+        reload=True,
+    )
+
+# if __name__ == "__main__":
+#     resp = get_user_info(user_id="3")
+#     print(f"Registered user ID: {resp}")
