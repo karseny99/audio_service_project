@@ -38,7 +38,7 @@
 
 '''
 
-from src.services.user_service import register_user
+from src.services.user_service import register_user, get_user_info
 from src.core.middleware.auth import AuthMiddleware
 import random
 
@@ -69,9 +69,5 @@ if __name__ == "__main__":
     )
 
 # if __name__ == "__main__":
-#     user_id = register_user(
-#         username=f"{random.randint(1, 10**10)}",
-#         email=f"john@example.com{random.randint(1, 10**10)}",
-#         password="secure123"
-#     )
-#     print(f"Registered user ID: {user_id}")
+#     resp = get_user_info(user_id="3")
+#     print(f"Registered user ID: {resp}")
