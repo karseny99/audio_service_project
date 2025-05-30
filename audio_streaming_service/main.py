@@ -59,6 +59,8 @@ async def main():
         initial_bitrate="320",
         chunk_size=32768  # 32KB
     )
+
+    print(streamer.available_bitrates)
     
     for i, chunk in enumerate(streamer.chunks()):
         if i % 10:

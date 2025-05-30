@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import Optional, Generator, Union
+from abc import ABC, abstractmethod, abstractproperty
+from typing import Optional, Generator, Union, List
 from uuid import UUID
 from datetime import datetime
 
@@ -39,6 +39,18 @@ class AbstractTrackService(ABC):
 
 
 class AudioStreamer(ABC):
+
+    @abstractmethod
+    def get_bitrates(self) -> List[str]:
+        raise NotImplementedError
+    
+    @abstractmethod
+    def switch_bitrate(self, new_bitrate: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def seek(self, offset_bytes: int): 
+        raise NotImplementedError
     
     @abstractmethod
     def chunks(
@@ -46,4 +58,14 @@ class AudioStreamer(ABC):
         start_pos: Union[int, float] = 0
     ) -> Generator[AudioChunk, None, None]:
         """Генератор чанков трека"""
+        raise NotImplementedError
+    
+    @abstractproperty
+    def bitrate(self) -> str:
+        """Возвращает текущий битрейт"""
+        raise NotImplementedError
+
+    @abstractproperty
+    def duration(self) -> float:
+        """Возвращает длительность трека в секундах"""
         raise NotImplementedError

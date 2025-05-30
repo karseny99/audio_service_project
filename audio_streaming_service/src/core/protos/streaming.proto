@@ -26,8 +26,9 @@ message ServerMessage {
 // ===== КОМАНДЫ ===== //
 message StartStream {
   string track_id = 1;
-  string bitrate = 2;       // "128kbps", "320kbps"
-  optional string session_id = 3;  // Для переподключения
+  string user_id = 2;
+  string bitrate = 3;       // "128", "320"
+  optional string session_id = 4;  // Для переподключения
 }
 
 message ChunkAck {
@@ -58,4 +59,5 @@ message AudioChunk {
   bytes data = 1;
   int32 number = 2;         
   bool is_last = 3;
+  string bitrate = 4;
 }

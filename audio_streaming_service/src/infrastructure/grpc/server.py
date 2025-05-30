@@ -1,152 +1,213 @@
-from grpc import StatusCode
-from dependency_injector.wiring import inject, Provide
 import grpc
 import asyncio
-from typing import AsyncIterator, Optional
-from src.core.di import Container
-from src.core.protos.generated import music_streaming_pb2_grpc, music_streaming_pb2
-from src.core.exceptions import (
-    TrackNotFoundError,
-    InvalidBitrateError,
-    StreamingSessionError
-)
-from src.core.config import settings
-from src.core.logger import logger
+from concurrent import futures
+from typing import AsyncIterator
+from dependency_injector.wiring import inject, Provide
+from containers import Container
+from datetime import datetime
 
-class StreamingService(music_streaming_pb2_grpc.StreamingServiceServicer):
-    @inject
-    def __init__(
-        self,
-        start_stream_uc=Provide[Container.start_stream_use_case],
-        stream_chunks_uc=Provide[Container.stream_chunks_use_case],
-        session_manager=Provide[Container.session_manager],
-        event_publisher=Provide[Container.event_publisher]
-    ):
-        self._start_stream_uc = start_stream_uc
-        self._stream_chunks_uc = stream_chunks_uc
-        self._session_manager = session_manager
-        self._event_publisher = event_publisher
-        self._active_generators = {}  # session_id: generator
+from src.domain.stream.models import StreamSession, StreamStatus
+from src.core.protos.generated import streaming_pb2, streaming_pb2_grpc
 
-    async def StreamAudio(
-        self,
-        request_iterator: AsyncIterator[music_streaming_pb2.StreamRequest],
-        context: grpc.ServicerContext
-    ) -> AsyncIterator[music_streaming_pb2.DataChunk]:
-        session_id = None
-        current_generator = None
-        
+from src.infrastructure.storage.audio_streamer import S3AudioStreamer
+
+# Кастомные исключения для управления потоком
+class StreamRestartException(Exception):
+    """Требует перезапуска генератора чанков"""
+    pass
+
+class StreamPausedException(Exception):
+    """Сессия поставлена на паузу"""
+    pass
+
+# @dataclass
+# class StreamSession:
+#     id: str
+#     user_id: str
+#     track_id: str
+#     current_bitrate: str
+#     position: int = 0
+#     paused: bool = False
+#     should_restart: bool = False
+
+class AudioStreamingService(streaming_pb2_grpc.StreamingServiceServicer):
+    def __init__(self, minio_client):
+        self.minio_client = minio_client
+        self.sessions: dict[str, StreamSession] = {}
+        self.executor = ThreadPoolExecutor(max_workers=10)
+
+    async def StreamAudio(self, request_iterator: AsyncIterator[streaming_pb2.ClientMessage], context):
         try:
-            async for request in request_iterator:
-                # Обработка команд
-                if request.HasField("start"):
-                    session_id = await self._handle_start(request.start, context)
-                    if session_id:
-                        current_generator = self._create_chunk_generator(session_id)
-
-                elif request.HasField("seek") and session_id:
-                    await self._handle_seek(request.seek, session_id)
-                    current_generator = self._create_chunk_generator(session_id)
-
-                elif request.HasField("pause") and session_id:
-                    await self._session_manager.pause(session_id)
-
-                elif request.HasField("resume") and session_id:
-                    await self._session_manager.resume(session_id)
-
-                elif request.HasField("ping") and session_id:
-                    await self._event_publisher.publish_chunk_delivered(
-                        session_id=session_id,
-                        offset=request.ping.offset
-                    )
-
-                # Отправка чанков, если есть активный генератор
-                if current_generator:
-                    try:
-                        chunk = await current_generator.__anext__()
-                        yield self._create_chunk_response(chunk)
-                    except StopAsyncIteration:
-                        current_generator = None
-
-        except Exception as e:
-            logger.error(f"Streaming error: {str(e)}")
-            raise
-        finally:
-            if session_id:
-                await self._cleanup_session(session_id)
-
-    async def _handle_start(self, request, context) -> Optional[str]:
-        try:
-            session_id = await self._start_stream_uc.execute(
-                user_id=self._get_user_id(context),
-                track_id=request.track_id,
-                bitrate=request.bitrate
+            # 1. Получаем начальный запрос
+            start_request = await self._get_start_request(request_iterator)
+            
+            # 2. Инициализируем сессию
+            session = await self._init_session(start_request)
+            yield self._create_session_info(session)
+            
+            # 3. Запускаем задачу для чтения сообщений
+            message_task = asyncio.create_task(
+                self._read_client_messages(request_iterator, session)
             )
-            return session_id
-        except TrackNotFoundError:
-            await context.abort(StatusCode.NOT_FOUND, "Track not found")
-        except InvalidBitrateError:
-            await context.abort(StatusCode.INVALID_ARGUMENT, "Unsupported bitrate")
+            
+            # 4. Основной цикл обработки
+            while session.status != StreamStatus.FINISHED:
+                try:
+                    async for chunk in self._generate_chunks(session):
+                        yield streaming_pb2.ServerMessage(chunk=chunk)
+                        
+                        # Проверяем команды управления после каждого чанка
+                        control_action = await self._check_control_messages(session)
+                        if control_action:
+                            await self._process_control(session, control_action)
+                            
+                except StreamRestartException:
+                    continue
+                except StreamPausedException:
+                    await self._handle_pause(session)
+                    
+        except asyncio.CancelledError:
+            session.status = StreamStatus.FINISHED
+        finally:
+            await self._cleanup_session(session)
+            message_task.cancel()
+
+    async def _read_client_messages(self, request_iterator, session):
+        """Читает сообщения от клиента и складывает в очередь"""
+        async for request in request_iterator:
+            if session.message_queue is not None:
+                await session.message_queue.put(request)
+            else:
+                print("Message queue not initialized")
+
+    async def _check_control_messages(self, session) -> Optional[streaming_pb2.StreamControl]:
+        """Проверяет очередь на наличие управляющих команд"""
+        try:
+            if session.message_queue.empty():
+                return None
+                
+            request = await asyncio.wait_for(
+                session.message_queue.get(), 
+                timeout=0.001  # Неблокирующая проверка
+            )
+            
+            if request.HasField("control"):
+                return request.control
+            elif request.HasField("ack"):
+                await self._handle_chunk_ack(session, request.ack)
+                
+        except asyncio.TimeoutError:
+            pass
         except Exception as e:
-            logger.error(f"Start stream error: {str(e)}")
-            await context.abort(StatusCode.INTERNAL, "Internal server error")
+            print(f"Error processing control messages: {e}")
+            
         return None
 
-    async def _handle_seek(self, request, session_id: str):
-        try:
-            await self._session_manager.seek(
-                session_id=session_id,
-                offset=request.offset
+    async def _process_control(self, session, control):
+        """Обрабатывает управляющую команду"""
+        if control.action == streaming_pb2.StreamControl.PAUSE:
+            session.status = StreamStatus.PAUSED
+            session.paused_at = datetime.now()
+            session.pause_event.clear()
+            raise StreamPausedException()
+            
+        elif control.action == streaming_pb2.StreamControl.RESUME:
+            session.status = StreamStatus.STARTED
+            session.pause_event.set()
+            
+        elif control.action == streaming_pb2.StreamControl.CHANGE_BITRATE:
+            if control.bitrate in session.track.available_bitrates:
+                session.current_bitrate = control.bitrate
+                session.status = StreamStatus.SHOULD_RESTART
+                raise StreamRestartException()
+                
+        elif control.action == streaming_pb2.StreamControl.SEEK:
+            if 0 <= control.chunk_num < session.track.total_chunks:
+                session.current_chunk = control.chunk_num
+                session.status = StreamStatus.SHOULD_RESTART
+                raise StreamRestartException()
+                
+        elif control.action == streaming_pb2.StreamControl.STOP:
+            session.status = StreamStatus.FINISHED
+            session.finished_at = datetime.now()
+
+    async def _handle_pause(self, session):
+        """Ожидает возобновления сессии"""
+        await session.pause_event.wait()
+        if session.status == StreamStatus.PAUSED:
+            session.status = StreamStatus.STARTED
+
+    async def _generate_chunks(self, session) -> AsyncIterator[AudioChunk]:
+        """Генератор чанков с учетом текущего состояния"""
+        streamer = AudioStreamer(
+            self.minio_client,
+            bucket="audio-bucket",
+            track_id=session.track.track_id,
+            bitrate=session.current_bitrate,
+            start_chunk=session.current_chunk
+        )
+        
+        async for chunk in streamer.chunks():
+            if session.status == StreamStatus.PAUSED:
+                raise StreamPausedException()
+            if session.status == StreamStatus.FINISHED:
+                break
+                
+            session.current_chunk = chunk.number
+            yield chunk
+            
+            if chunk.is_last:
+                session.status = StreamStatus.FINISHED
+                session.finished_at = datetime.now()
+
+    async def _init_session(self, request) -> StreamSession:
+        """Инициализирует новую сессию"""
+        track = await self._get_track_metadata(request.track_id)
+        
+        session = StreamSession(
+            session_id=request.session_id or self._generate_session_id(),
+            user_id=request.user_id,
+            track=track,
+            current_bitrate=request.bitrate,
+            status=StreamStatus.STARTED,
+            current_chunk=0,
+            started_at=datetime.now(),
+            message_queue=asyncio.Queue(),
+            pause_event=asyncio.Event()
+        )
+        session.pause_event.set()  # Изначально не на паузе
+        
+        self.sessions[session.session_id] = session
+        return session
+
+    async def _get_track_metadata(self, track_id) -> AudioTrack:
+        """Получает метаданные трека из хранилища"""
+        # Реализация зависит от вашего хранилища
+        return AudioTrack(
+            track_id=track_id,
+            total_chunks=100,  # Примерное значение
+            available_bitrates=["128kbps", "320kbps"],
+            duration_ms=240000  # 4 минуты
+        )
+
+    async def _cleanup_session(self, session):
+        """Очищает ресурсы сессии"""
+        if session.session_id in self.sessions:
+            del self.sessions[session.session_id]
+        if hasattr(session, 'message_queue'):
+            session.message_queue = None
+
+    def _create_session_info(self, session):
+        return streaming_pb2.ServerMessage(
+            session=streaming_pb2.SessionInfo(
+                session_id=session.session_id,
+                current_bitrate=session.current_bitrate,
+                total_chunks=session.track.total_chunks,
+                available_bitrates=session.track.available_bitrates
             )
-        except StreamingSessionError as e:
-            logger.error(f"Seek error: {str(e)}")
-            raise
-
-    def _create_chunk_generator(self, session_id: str):
-        """Создает новый генератор чанков для сессии"""
-        session = self._session_manager.get_session(session_id)
-        return self._stream_chunks_uc.execute(
-            track_id=session.track_id,
-            bitrate=session.bitrate,
-            offset=session.offset
         )
 
-    def _create_chunk_response(self, chunk) -> music_streaming_pb2.DataChunk:
-        """Конвертирует доменный объект Chunk в gRPC ответ"""
-        return music_streaming_pb2.DataChunk(
-            data=chunk.data,
-            offset=chunk.offset,
-            is_last=chunk.is_last
-        )
-
-    async def _cleanup_session(self, session_id: str):
-        """Корректно завершает сессию"""
-        if session_id in self._active_generators:
-            del self._active_generators[session_id]
-        await self._session_manager.end_session(session_id)
-
-    def _get_user_id(self, context) -> str:
-        """Извлекает user_id из метаданных gRPC"""
-        for key, value in context.invocation_metadata():
-            if key == "user_id":
-                return value
-        context.abort(StatusCode.UNAUTHENTICATED, "Missing user_id")
-        return ""
-
-async def serve_grpc():
-    server = grpc.aio.server()
-    music_streaming_pb2_grpc.add_MusicStreamerServicer_to_server(
-        StreamingService(), server
-    )
-    server.add_insecure_port(settings.get_grpc_url())
-    
-    await server.start()
-    logger.info(f"gRPC streaming server started on {settings.get_grpc_url()}")
-    
-    try:
-        while True:
-            await asyncio.sleep(3600)
-    except (asyncio.CancelledError, KeyboardInterrupt):
-        logger.info("Shutting down streaming server...")
-        await server.stop(5)
-        logger.info("Streaming server shutdown complete")
+    async def _handle_chunk_ack(self, session, ack):
+        """Обрабатывает подтверждение получения чанков"""
+        # Можно добавить логику контроля потока
+        pass

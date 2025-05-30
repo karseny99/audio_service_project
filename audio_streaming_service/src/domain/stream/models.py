@@ -1,9 +1,11 @@
+import asyncio
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Optional
 from datetime import datetime
 
 class StreamStatus(Enum):
+    SHOULD_RESTART = auto()
     STARTED = auto()
     PAUSED = auto()
     FINISHED = auto()
@@ -26,6 +28,9 @@ class StreamSession:
     started_at: datetime
     paused_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
+    message_queue: asyncio.Queue = None  
+    pause_event: asyncio.Event = None    
+
 
 @dataclass
 class AudioChunk:

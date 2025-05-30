@@ -1,8 +1,10 @@
 from minio import Minio
-from typing import Generator, Optional, Union
+from typing import Generator, Optional, Union, List
 from dependency_injector.wiring import inject, Provide
 
 from src.core.config import settings
+from src.core.logger import logger
+from src.core.exceptions import BitrateNotFound
 from src.core.di import Container
 from src.core.exceptions import AccessFail
 from src.domain.stream.repository import AudioStreamer, AudioChunk
@@ -32,6 +34,7 @@ class S3AudioStreamer(AudioStreamer):
         self.chunk_size = chunk_size
         self.path = path
         self.current_bitrate = initial_bitrate
+        self.available_bitrates = []
         self._refresh_object_info()
         self.current_offset = 0
         self.chunk_counter = 0 
@@ -44,6 +47,8 @@ class S3AudioStreamer(AudioStreamer):
         """Обновляет метаданные текущего аудиофайла"""
         self.object_name = self._get_object_name()
         try:
+            self.available_bitrates = self.get_bitrates()
+
             self.object_stat = self.minio_client.stat_object(
                 self.bucket_name, 
                 self.object_name
@@ -62,6 +67,33 @@ class S3AudioStreamer(AudioStreamer):
         """Оценивает длительность на основе битрейта и размера файла"""
         bitrate_kbps = int(self.current_bitrate)
         return (self.object_size * 8) / (bitrate_kbps * 1000)
+    
+    def get_bitrates(self) -> List[str]:
+        """
+        Возвращает список доступных битрейтов для текущего трека
+        """
+        try:
+            prefix = f"{self.path}{self.track_id}/"
+            
+            objects = self.minio_client.list_objects(
+                self.bucket_name,
+                prefix=prefix,
+                recursive=False
+            )
+            
+            bitrates = []
+            for obj in objects:
+                if obj.object_name.endswith('.mp3'):
+                    filename = obj.object_name.split('/')[-1]
+                    bitrate = filename.replace('.mp3', '')
+                    if bitrate.isdigit():
+                        bitrates.append(bitrate)
+            
+            return sorted(bitrates, key=lambda x: int(x), reverse=True)
+            
+        except Exception as e:
+            logger.info(f"Error getting available bitrates: {str(e)}")
+            return []
 
     def switch_bitrate(self, new_bitrate: str):
         """
@@ -71,6 +103,9 @@ class S3AudioStreamer(AudioStreamer):
         """
         if new_bitrate == self.current_bitrate:
             return
+
+        if new_bitrate not in self.available_bitrates:
+            raise BitrateNotFound("No such bitrate found")
 
         # Сохраняем текущую позицию в секундах
         current_time = self.get_current_time()

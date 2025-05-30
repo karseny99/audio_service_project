@@ -4,13 +4,7 @@ class DomainError(Exception):
 class ValueObjectException(ValueError):
     pass
 
-class InvalidPasswordError(DomainError):
-    pass
-
-class TrackNotFoundError(DomainError):
-    pass
-
-class InvalidBitrateError(DomainError):
+class BitrateNotFound(DomainError):
     pass
 
 class StreamingSessionError(DomainError):
