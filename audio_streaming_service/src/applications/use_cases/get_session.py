@@ -53,7 +53,7 @@ class GetSessionUseCase:
         #         bitrate=session.current_bitrate,
         #         timestamp=session.started_at,
         #     ),
-        #     key=str(user_id)
+        #     key=str(session.user_id)
         # )
 
         return session

@@ -10,8 +10,11 @@ import uuid
 
 from src.applications.use_cases.get_session import GetSessionUseCase
 from src.applications.use_cases.chunk_generator import GetChunkGeneratorUseCase
+from src.applications.use_cases.ack_chunks import AcknowledgeChunksUseCase
+from src.applications.use_cases.control_session import AcknowledgeChunksUseCase
 from src.core.protos.generated import streaming_pb2, streaming_pb2_grpc
 from src.domain.stream.models import StreamSession, StreamStatus
+from src.core.exceptions import UnknownMessageReceived
 from src.core.di import Container
 from src.core.logger import logger
 
@@ -30,9 +33,11 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             self,
             get_session_use_case: GetSessionUseCase = Provide[Container.get_session_use_case],
             get_chunk_generator_use_case: GetChunkGeneratorUseCase = Provide[Container.get_chunk_generator_use_case],
+            acknowledge_chunks_use_case: AcknowledgeChunksUseCase = Provide[Container.get_ack_chunks_use_case]
         ):
         self._get_session_use_case = get_session_use_case
         self._get_chunk_generator_use_case = get_chunk_generator_use_case 
+        self._acknowledge_chunks_use_case = acknowledge_chunks_use_case
 
     async def StreamAudio(
             self, 
@@ -140,11 +145,35 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             request = await session.message_queue.get()
             if request.HasField("control"):
                 await self._handle_control(request.control, session)
-            if request.HasField("ack"):
-                await self._handle_ack(request.control, session)
+            elif request.HasField("ack"):
+                await self._handle_ack(request.ack, session)
+            else:
+                raise UnknownMessageReceived(f"Received unknown msg: {request}")
 
-    async def _handle_control(request, session):
-        pass
+    async def _handle_control(self, request: streaming_pb2.ClientMessage, session: StreamSession):
+        try:
+            if request.action == streaming_pb2.StreamControl.PAUSE:
+                self._handle_pause(session)
+                
+            elif request.action == streaming_pb2.StreamControl.RESUME:
+                self._handle_resume(session)
+                
+            elif request.action == streaming_pb2.StreamControl.STOP:
+                self._handle_stop(session)
+                
+            elif request.action == streaming_pb2.StreamControl.CHANGE_BITRATE:
+                await self._handle_change_bitrate(request, session)
+                
+            elif request.action == streaming_pb2.StreamControl.SEEK:
+                self._handle_seek(request, session)
+                
+            else:
+                raise UnknownMessageReceived(f"Unknown control action: {request}")
+                
+        except Exception as e:
+            logger.error(f"Control action failed: {str(e)}")
+            raise
+
     
-    async def _handle_ack(request, session):
-        pass
+    async def _handle_ack(self, request, session):
+        self._acknowledge_chunks_use_case.execute(request.received_count, session)

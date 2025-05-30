@@ -52,19 +52,19 @@ from src.core.di import Container
 async def main():
 
     container = Container()
-
+    await Container.init_resources()
+    
     streamer = container.audio_streamer()
 
-    streamer.initialize(        
+    await streamer.initialize(        
         track_id="1",
         initial_bitrate="320",
     )
 
     print(streamer.available_bitrates)
-    
-    for i, chunk in enumerate(streamer.chunks()):
-        if (i + 1) % 10 == 0:
-            streamer.switch_bitrate("128")
+    chunk_gen = streamer.chunks()
+    async for chunk in chunk_gen:
+            # streamer.switch_bitrate("128")
         print(f"Chunk #{chunk.number} | Size: {len(chunk.data)}")
 
 asyncio.run(main())

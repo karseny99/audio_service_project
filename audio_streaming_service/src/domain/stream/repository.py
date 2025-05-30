@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional, Generator, Union, List
+from typing import Optional, AsyncGenerator, Union, List
 from uuid import UUID
 from datetime import datetime
 
@@ -41,15 +41,15 @@ class AbstractTrackService(ABC):
 class AudioStreamer(ABC):
 
     @abstractmethod
-    def initialize(self, track_id: str, initial_bitrate: str) -> None:
+    async def initialize(self, track_id: str, initial_bitrate: str) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def get_bitrates(self) -> List[str]:
+    async def get_bitrates(self) -> List[str]:
         raise NotImplementedError
     
     @abstractmethod
-    def switch_bitrate(self, new_bitrate: str):
+    async def switch_bitrate(self, new_bitrate: str):
         raise NotImplementedError
 
     @abstractmethod
@@ -57,10 +57,10 @@ class AudioStreamer(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    def chunks(
+    async def chunks(
         self, 
         start_pos: Union[int, float] = 0
-    ) -> Generator[AudioChunk, None, None]:
+    ) -> AsyncGenerator[AudioChunk, None]:
         """Генератор чанков трека"""
         raise NotImplementedError
     

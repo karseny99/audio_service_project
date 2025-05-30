@@ -12,3 +12,6 @@ class StreamingSessionError(DomainError):
 
 class AccessFail(ValueError):
     pass
+
+class UnknownMessageReceived(ValueError):
+    pass

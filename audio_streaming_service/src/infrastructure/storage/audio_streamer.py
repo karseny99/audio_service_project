@@ -1,9 +1,8 @@
 import math
-from minio import Minio
-from typing import Generator, Optional, Union, List
+from typing import Generator, Optional, Union, List, AsyncGenerator
 from dependency_injector.wiring import inject, Provide
+from aiobotocore.session import get_session
 
-from src.core.config import settings
 from src.core.logger import logger
 from src.core.exceptions import BitrateNotFound
 from src.core.exceptions import AccessFail
@@ -11,24 +10,29 @@ from src.domain.stream.repository import AudioStreamer, AudioChunk
 
 
 class S3AudioStreamer(AudioStreamer):
-    @inject
     def __init__(
         self,
         bucket_name: str,
-        minio_client: Minio,
+        aws_access_key_id: str,
+        aws_secret_access_key: str,
+        endpoint_url: str,
         chunk_size: int = 32768,
         path: str = "",
     ):
         """
         :param bucket_name: имя бакета
-        :param minio_client: клиент MinIO
+        :param aws_access_key_id: AWS access key (или MinIO access key)
+        :param aws_secret_access_key: AWS secret key (или MinIO secret key)
+        :param endpoint_url: URL endpoint S3/MinIO
         :param chunk_size: размер чанка в байтах
         :param path: базовый путь к трекам
         """
-        self.minio_client = minio_client
         self.bucket_name = bucket_name
         self.chunk_size = chunk_size
         self.path = path
+        self.aws_access_key_id = aws_access_key_id
+        self.aws_secret_access_key = aws_secret_access_key 
+        self.endpoint_url = endpoint_url
         
         # Поля, которые будут инициализированы после вызова initialize()
         self.track_id: Optional[str] = None
@@ -40,43 +44,64 @@ class S3AudioStreamer(AudioStreamer):
         self.current_offset = 0
         self.chunk_counter = 0
         self._initialized = False
+        self._s3_client = None
 
-    def initialize(self, track_id: str, initial_bitrate: str) -> None:
+    async def _get_client(self):
+        """Ленивая инициализация клиента"""
+        if self._s3_client is None:
+            session = get_session()
+            self._s3_client = await session.create_client(
+                's3',
+                aws_access_key_id=self.aws_access_key_id,
+                aws_secret_access_key=self.aws_secret_access_key,
+                endpoint_url=self.endpoint_url,
+                region_name='us-east-1',
+            ).__aenter__()
+        return self._s3_client
+
+    async def close(self):
+        """Закрытие клиента"""
+        if self._s3_client is not None:
+            await self._s3_client.close()
+            self._s3_client = None
+
+
+    async def initialize(self, track_id: str, initial_bitrate: str) -> None:
         """
         Инициализирует стример для конкретного трека
         :param track_id: ID трека
         :param initial_bitrate: начальный битрейт
-        """
+        """           
         self.track_id = track_id
         self.current_bitrate = initial_bitrate
-        self._refresh_object_info()
+        await self._refresh_object_info()
         self._initialized = True
 
     def _validate_initialized(self):
         """Проверяет, что стример инициализирован"""
         if not self._initialized:
-            raise RuntimeError("S3AudioStreamer not initialized. Call initialize() first")
+            raise RuntimeError("AsyncS3AudioStreamer not initialized. Call initialize() first")
 
     def _get_object_name(self) -> str:
-        """Генерирует имя объекта в MinIO"""
+        """Генерирует имя объекта в S3/MinIO"""
         return f"{self.path}/{self.track_id}/{self.current_bitrate}.mp3"
 
-    def _refresh_object_info(self):
-        """Обновляет метаданные текущего аудиофайла"""
+    async def _refresh_object_info(self):
         self.object_name = self._get_object_name()
         try:
-            self.available_bitrates = self.get_bitrates()
+            client = await self._get_client()
+            self.available_bitrates = await self.get_bitrates()
             
-            self.object_stat = self.minio_client.stat_object(
-                self.bucket_name, 
-                self.object_name
+            head_response = await client.head_object(
+                Bucket=self.bucket_name,
+                Key=self.object_name
             )
-            self.object_size = self.object_stat.size
-            self.duration_seconds = float(getattr(
-                self.object_stat.metadata,
-                'x-amz-meta-duration',
-                self._estimate_duration()
-            ))
+            
+            self.object_size = head_response['ContentLength']
+            self.duration_seconds = float(head_response.get(
+                'Metadata', {}
+            ).get('duration', self._estimate_duration()))
+            
         except Exception as e:
             raise AccessFail(f"Error accessing {self.object_name}: {str(e)}")
 
@@ -85,34 +110,34 @@ class S3AudioStreamer(AudioStreamer):
         bitrate_kbps = int(self.current_bitrate)
         return (self.object_size * 8) / (bitrate_kbps * 1000)
     
-    def get_bitrates(self) -> List[str]:
-        """
-        Возвращает список доступных битрейтов для текущего трека
-        """
+    async def get_bitrates(self) -> List[str]:
         try:
+            client = await self._get_client()
             prefix = f"{self.path}{self.track_id}/"
             
-            objects = self.minio_client.list_objects(
-                self.bucket_name,
-                prefix=prefix,
-                recursive=False
-            )
+            paginator = client.get_paginator('list_objects_v2')
+            async for result in paginator.paginate(
+                Bucket=self.bucket_name,
+                Prefix=prefix,
+                Delimiter='/'
+            ):
+                bitrates = []
+                for obj in result.get('Contents', []):
+                    key = obj['Key']
+                    if key.endswith('.mp3'):
+                        filename = key.split('/')[-1]
+                        bitrate = filename.replace('.mp3', '')
+                        if bitrate.isdigit():
+                            bitrates.append(bitrate)
+                
+                return sorted(bitrates, key=lambda x: int(x), reverse=True)
             
-            bitrates = []
-            for obj in objects:
-                if obj.object_name.endswith('.mp3'):
-                    filename = obj.object_name.split('/')[-1]
-                    bitrate = filename.replace('.mp3', '')
-                    if bitrate.isdigit():
-                        bitrates.append(bitrate)
-            
-            return sorted(bitrates, key=lambda x: int(x), reverse=True)
-            
+            return []
         except Exception as e:
             logger.info(f"Error getting available bitrates: {str(e)}")
             return []
 
-    def switch_bitrate(self, new_bitrate: str):
+    async def switch_bitrate(self, new_bitrate: str):
         """
         Переключает битрейт с сохранением временной позиции
         
@@ -130,7 +155,7 @@ class S3AudioStreamer(AudioStreamer):
         
         # Переключаемся на новый битрейт
         self.current_bitrate = new_bitrate
-        self._refresh_object_info()
+        await self._refresh_object_info()
         
         # Восстанавливаем позицию в новом файле
         self.set_current_time(current_time)
@@ -161,16 +186,9 @@ class S3AudioStreamer(AudioStreamer):
         # Обеспечиваем, чтобы позиция была в пределах файла
         self.current_offset = max(0, min(new_offset, self.object_size - 1))
 
-    def read_chunk(self, offset: Optional[Union[int, float]] = None) -> bytes:
-        """
-        Читает чанк данных
-        
-        :param offset: смещение в байтах (int) или секундах (float)
-        :return: аудиоданные
-        """
+    async def read_chunk(self, offset: Optional[Union[int, float]] = None) -> bytes:
         self._validate_initialized()
 
-        # Обработка параметра offset
         if offset is not None:
             if isinstance(offset, float):
                 self.set_current_time(offset)
@@ -181,21 +199,19 @@ class S3AudioStreamer(AudioStreamer):
             return b''
 
         try:
-            response = self.minio_client.get_object(
-                self.bucket_name,
-                self.object_name,
-                offset=self.current_offset,
-                length=min(self.chunk_size, self.object_size - self.current_offset)
+            client = await self._get_client()
+            response = await client.get_object(
+                Bucket=self.bucket_name,
+                Key=self.object_name,
+                Range=f"bytes={self.current_offset}-{min(self.current_offset + self.chunk_size - 1, self.object_size - 1)}"
             )
             
-            chunk_data = response.read()
-            self.current_offset += len(chunk_data)
-            return chunk_data
+            async with response['Body'] as stream:
+                chunk_data = await stream.read()
+                self.current_offset += len(chunk_data)
+                return chunk_data
         except Exception as e:
             raise RuntimeError(f"Error reading chunk: {str(e)}")
-        finally:
-            response.close()
-            response.release_conn()
 
     def seek(self, offset_bytes: int):
         """
@@ -209,19 +225,12 @@ class S3AudioStreamer(AudioStreamer):
             raise ValueError(f"Offset must be between 0 and {self.object_size - 1}")
         self.current_offset = offset_bytes
 
-    def chunks(self, start_pos: Union[int, float] = 0) -> Generator[AudioChunk, None, None]:
+    async def chunks(self, start_pos: Union[int, float] = 0) -> AsyncGenerator[AudioChunk, None]:
         """
-        Генератор для последовательного чтения чанков
+        Асинхронный генератор для последовательного чтения чанков
         
         :param start_pos: начальная позиция в байтах (int) или секундах (float)
         :yield: чанки аудиоданных
-
-        @dataclass
-        class AudioChunk:
-            data: bytes
-            number: int  # Порядковый номер (соответствует current_chunk сессии)
-            is_last: bool
-            bitrate: str 
         """
         self._validate_initialized()
 
@@ -234,7 +243,7 @@ class S3AudioStreamer(AudioStreamer):
         remaining_bytes = self.object_size - self.current_offset
 
         while remaining_bytes > 0:
-            chunk_data = self.read_chunk()
+            chunk_data = await self.read_chunk()
             if not chunk_data:
                 break
                 

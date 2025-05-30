@@ -13,12 +13,14 @@ class SessionStarted(SessionEvent):
     timestamp: datetime
 
 @dataclass
-class ChunkDeliveredEvent(SessionEvent):
+class ChunksAckEvent(SessionEvent):
     session_id: str
     offset: int
-    chunk_size: int
+    acked_chunk_count: int
+    timestamp: datetime
 
 @dataclass
 class BitrateChangedEvent(SessionEvent):
     session_id: str
     new_bitrate: int
+    timestamp: datetime

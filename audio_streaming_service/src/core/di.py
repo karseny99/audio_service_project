@@ -1,9 +1,11 @@
+from aiobotocore.session import get_session
 from dependency_injector import containers, providers
 from faststream.kafka import KafkaBroker
-from minio import Minio
+
 
 from src.applications.use_cases.get_session import GetSessionUseCase
 from src.applications.use_cases.chunk_generator import GetChunkGeneratorUseCase
+from src.applications.use_cases.ack_chunks import AcknowledgeChunksUseCase
 from src.infrastructure.storage.audio_streamer import S3AudioStreamer
 from src.infrastructure.cache.redis_repository import RedisCacheRepository
 # from src.infrastructure.kafka.publisher import KafkaEventPublisher
@@ -65,18 +67,27 @@ class Container(containers.DeclarativeContainer):
 
 
     # minio storage ** experimental **
-    minio_client = providers.Factory(
-        Minio,
-        endpoint=settings.MINIO_URL,
-        access_key=settings.MINIO_USER,
-        secret_key=settings.MINIO_PASSWORD,
-        secure=False
-    )
+    # minio_client = providers.Factory(
+    #     Minio,
+    #     endpoint=settings.MINIO_URL,
+    #     access_key=settings.MINIO_USER,
+    #     secret_key=settings.MINIO_PASSWORD,
+    #     secure=False
+    # )
+
+    # audio_streamer = providers.Singleton(
+    #     S3AudioStreamer,
+    #     bucket_name=settings.MINIO_TRACK_BUCKET,
+    #     minio_client=minio_client,
+    #     chunk_size=settings.MINIO_DEFAULT_CHUNK_SIZE,
+    #     path=settings.MINIO_TRACK_PATH,
 
     audio_streamer = providers.Singleton(
         S3AudioStreamer,
         bucket_name=settings.MINIO_TRACK_BUCKET,
-        minio_client=minio_client,
+        aws_access_key_id=settings.MINIO_USER,
+        aws_secret_access_key=settings.MINIO_PASSWORD,
+        endpoint_url=settings.MINIO_URL,
         chunk_size=settings.MINIO_DEFAULT_CHUNK_SIZE,
         path=settings.MINIO_TRACK_PATH,
     )
@@ -92,6 +103,7 @@ class Container(containers.DeclarativeContainer):
         GetSessionUseCase, 
         session_repo=redis_client,
         audio_streamer=audio_streamer,
+        # event_publisher=
     )
 
     get_chunk_generator_use_case = providers.Factory(
@@ -99,11 +111,15 @@ class Container(containers.DeclarativeContainer):
         audio_streamer=audio_streamer
     )
 
+    get_ack_chunks_use_case = providers.Factory(
+        AcknowledgeChunksUseCase,
+        # event_publisher=
+    )
+
     @classmethod
     async def init_resources(cls):
         # publisher = cls.kafka_publisher()
         # await publisher.connect()
-        
         redis = cls.redis_client()
         await redis.connect()
 
@@ -111,8 +127,6 @@ class Container(containers.DeclarativeContainer):
     async def shutdown_resources(cls):
         redis = cls.redis_client()
         await redis.disconnect()
-
-
         
         # publisher = cls.kafka_publisher()
         # if publisher:

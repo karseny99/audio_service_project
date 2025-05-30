@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 
 
     # S3
-    MINIO_URL: str = "localhost:9000"
+    MINIO_URL: str = "http://localhost:9000"
     MINIO_USER: str = "admin"
     MINIO_PASSWORD: str = "password"
     MINIO_TRACK_BUCKET: str = "tracks"
