@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     MINIO_PASSWORD: str = "password"
     MINIO_TRACK_BUCKET: str = "tracks"
     MINIO_TRACK_PATH: str = ""
-
+    MINIO_DEFAULT_CHUNK_SIZE: int = 32768
     
     @property
     def REDIS_URL(self) -> str:

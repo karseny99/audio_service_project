@@ -41,6 +41,10 @@ class AbstractTrackService(ABC):
 class AudioStreamer(ABC):
 
     @abstractmethod
+    def initialize(self, track_id: str, initial_bitrate: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_bitrates(self) -> List[str]:
         raise NotImplementedError
     
@@ -69,3 +73,8 @@ class AudioStreamer(ABC):
     def duration(self) -> float:
         """Возвращает длительность трека в секундах"""
         raise NotImplementedError
+    
+    @abstractproperty
+    def total_chunks(self) -> int:
+        raise NotImplementedError
+        

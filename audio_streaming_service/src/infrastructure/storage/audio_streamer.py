@@ -1,3 +1,4 @@
+import math
 from minio import Minio
 from typing import Generator, Optional, Union, List
 from dependency_injector.wiring import inject, Provide
@@ -5,7 +6,6 @@ from dependency_injector.wiring import inject, Provide
 from src.core.config import settings
 from src.core.logger import logger
 from src.core.exceptions import BitrateNotFound
-from src.core.di import Container
 from src.core.exceptions import AccessFail
 from src.domain.stream.repository import AudioStreamer, AudioChunk
 
@@ -15,29 +15,47 @@ class S3AudioStreamer(AudioStreamer):
     def __init__(
         self,
         bucket_name: str,
-        track_id: str,
-        initial_bitrate: str,
-        minio_client: Minio = Provide[Container.minio_client],
-        chunk_size: int = 32768,  # 32KB по умолчанию
+        minio_client: Minio,
+        chunk_size: int = 32768,
         path: str = "",
     ):
         """
-        :param minio_client: клиент MinIO
         :param bucket_name: имя бакета
-        :param track_id: ID трека
-        :param initial_bitrate: начальный битрейт ('128k', '320k' и т.д.)
+        :param minio_client: клиент MinIO
         :param chunk_size: размер чанка в байтах
+        :param path: базовый путь к трекам
         """
         self.minio_client = minio_client
         self.bucket_name = bucket_name
-        self.track_id = track_id
         self.chunk_size = chunk_size
         self.path = path
-        self.current_bitrate = initial_bitrate
-        self.available_bitrates = []
-        self._refresh_object_info()
+        
+        # Поля, которые будут инициализированы после вызова initialize()
+        self.track_id: Optional[str] = None
+        self.current_bitrate: Optional[str] = None
+        self.available_bitrates: List[str] = []
+        self.object_stat = None
+        self.object_size = 0
+        self.duration_seconds = 0.0
         self.current_offset = 0
-        self.chunk_counter = 0 
+        self.chunk_counter = 0
+        self._initialized = False
+
+    def initialize(self, track_id: str, initial_bitrate: str) -> None:
+        """
+        Инициализирует стример для конкретного трека
+        :param track_id: ID трека
+        :param initial_bitrate: начальный битрейт
+        """
+        self.track_id = track_id
+        self.current_bitrate = initial_bitrate
+        self._refresh_object_info()
+        self._initialized = True
+
+    def _validate_initialized(self):
+        """Проверяет, что стример инициализирован"""
+        if not self._initialized:
+            raise RuntimeError("S3AudioStreamer not initialized. Call initialize() first")
 
     def _get_object_name(self) -> str:
         """Генерирует имя объекта в MinIO"""
@@ -48,13 +66,12 @@ class S3AudioStreamer(AudioStreamer):
         self.object_name = self._get_object_name()
         try:
             self.available_bitrates = self.get_bitrates()
-
+            
             self.object_stat = self.minio_client.stat_object(
                 self.bucket_name, 
                 self.object_name
             )
             self.object_size = self.object_stat.size
-            # Получаем длительность из метаданных, если доступно
             self.duration_seconds = float(getattr(
                 self.object_stat.metadata,
                 'x-amz-meta-duration',
@@ -101,6 +118,7 @@ class S3AudioStreamer(AudioStreamer):
         
         :param new_bitrate: новый битрейт ('128k', '320k' и т.д.)
         """
+        self._validate_initialized()
         if new_bitrate == self.current_bitrate:
             return
 
@@ -123,6 +141,7 @@ class S3AudioStreamer(AudioStreamer):
         
         :return: позиция в секундах с плавающей точкой
         """
+        self._validate_initialized()
         bitrate_kbps = int(self.current_bitrate)
         bytes_per_second = (bitrate_kbps * 1000) / 8
         return self.current_offset / bytes_per_second
@@ -133,6 +152,8 @@ class S3AudioStreamer(AudioStreamer):
         
         :param seconds: позиция в секундах
         """
+        self._validate_initialized()
+
         bitrate_kbps = int(self.current_bitrate)
         bytes_per_second = (bitrate_kbps * 1000) / 8
         new_offset = int(seconds * bytes_per_second)
@@ -147,6 +168,8 @@ class S3AudioStreamer(AudioStreamer):
         :param offset: смещение в байтах (int) или секундах (float)
         :return: аудиоданные
         """
+        self._validate_initialized()
+
         # Обработка параметра offset
         if offset is not None:
             if isinstance(offset, float):
@@ -180,6 +203,8 @@ class S3AudioStreamer(AudioStreamer):
         
         :param offset_bytes: смещение в байтах
         """
+        self._validate_initialized()
+
         if not 0 <= offset_bytes < self.object_size:
             raise ValueError(f"Offset must be between 0 and {self.object_size - 1}")
         self.current_offset = offset_bytes
@@ -198,6 +223,8 @@ class S3AudioStreamer(AudioStreamer):
             is_last: bool
             bitrate: str 
         """
+        self._validate_initialized()
+
         if isinstance(start_pos, float):
             self.set_current_time(start_pos)
         else:
@@ -227,9 +254,16 @@ class S3AudioStreamer(AudioStreamer):
     @property
     def bitrate(self) -> str:
         """Возвращает текущий битрейт"""
+        self._validate_initialized()
         return self.current_bitrate
 
     @property
     def duration(self) -> float:
         """Возвращает длительность трека в секундах"""
+        self._validate_initialized()
         return self.duration_seconds
+    
+    @property
+    def total_chunks(self) -> int:
+        self._validate_initialized()
+        return (self.object_size + self.chunk_size - 1) // self.chunk_size

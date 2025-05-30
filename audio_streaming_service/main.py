@@ -53,17 +53,17 @@ async def main():
 
     container = Container()
 
-    streamer = S3AudioStreamer(
-        bucket_name="tracks",
+    streamer = container.audio_streamer()
+
+    streamer.initialize(        
         track_id="1",
         initial_bitrate="320",
-        chunk_size=32768  # 32KB
     )
 
     print(streamer.available_bitrates)
     
     for i, chunk in enumerate(streamer.chunks()):
-        if i % 10:
+        if (i + 1) % 10 == 0:
             streamer.switch_bitrate("128")
         print(f"Chunk #{chunk.number} | Size: {len(chunk.data)}")
 

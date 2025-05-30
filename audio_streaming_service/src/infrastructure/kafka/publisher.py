@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from src.core.config import settings
 from src.core.logger import logger
 
-# from src.domain.events.events import UserEvent
+from src.domain.events.events import SessionEvent
 from src.domain.events.publisher import EventPublisher
 from src.infrastructure.events.base_converter import BaseEventConverter
 
@@ -52,7 +52,7 @@ class KafkaEventPublisher(EventPublisher):
         finally:
             pass  # Не закрываем соединение явно, чтобы переиспользовать
 
-    async def publish(self, event, key: str | None = None):
+    async def publish(self, event: SessionEvent, key: str | None = None):
         """Публикация сообщения с гарантированным подключением"""
         try:
             async with self.get_producer() as producer:   
