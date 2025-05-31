@@ -20,10 +20,11 @@ from src.applications.use_cases.control_session import (
     ChangeSessionOffsetUseCase
 )
 from src.core.protos.generated import streaming_pb2, streaming_pb2_grpc
-from src.domain.stream.models import StreamSession, StreamStatus
+from src.domain.stream.models import StreamSession, StreamStatus, AudioChunk
 from src.core.exceptions import UnknownMessageReceived
 from src.core.di import Container
 from src.core.logger import logger
+from src.core.config import settings
 
 
 class _StreamRestartException(Exception):
@@ -90,27 +91,20 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
                             break
                              
                         # Отправляем чанк и обновляем состояние
-                        yield streaming_pb2.ServerMessage(
-                            chunk=streaming_pb2.AudioChunk(
-                                data=chunk.data,
-                                number=chunk.number,
-                                is_last=chunk.is_last,
-                                bitrate=chunk.bitrate,
-                            )
-                        )
+                        yield self._create_chunk_message(chunk)
 
                         session.current_chunk = chunk.number + 1
                         
-                        if session.current_chunk % 30 == 0:
+                        if session.total_chunks_sent % 30 == 0:
                             await self._update_session_use_case.execute(session)
 
                         if chunk.is_last:
-                            session.status = StreamStatus.FINISHED
+                            session.status = StreamStatus.STOPPED
                             session.finished_at = datetime.now()
                 
                 except _StreamRestartException:
                     yield self._create_session_info_message(session)
-                    continue  # Перезапускаем цикл с новыми параметрами
+                    continue  # Перезапускаем цикл с новыми параметрами audio streamer
                     
         except Exception as e:
             # await self._handle_error(context, e)
@@ -165,6 +159,16 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
         except Exception as e:
             raise StreamInitError(f"Session initialization failed: {str(e)}")
     
+    def _create_chunk_message(self, chunk: AudioChunk) -> streaming_pb2.ServerMessage:
+        return streaming_pb2.ServerMessage(
+            chunk=streaming_pb2.AudioChunk(
+                data=chunk.data,
+                number=chunk.number,
+                is_last=chunk.is_last,
+                bitrate=chunk.bitrate,
+            )
+        )
+
     def _create_session_info_message(self, session: StreamSession) -> streaming_pb2.ServerMessage:
         return streaming_pb2.ServerMessage(
             session=streaming_pb2.SessionInfo(
@@ -245,3 +249,23 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
     
     async def _handle_ack(self, request, session):
         self._acknowledge_chunks_use_case.execute(request.received_count, session)
+
+
+
+async def serve_grpc():
+    server = grpc.aio.server()
+    streaming_pb2_grpc.add_StreamingServiceServicer_to_server(
+        StreamingService(), server
+    )
+    server.add_insecure_port(settings.get_grpc_url())
+    
+    await server.start()
+    logger.info(f"gRPC server started on {settings.get_grpc_url()}")
+    
+    try:
+        while True:
+            await asyncio.sleep(3600)  # Бесконечное ожидание
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        logger.info("Shutting down server...")
+        await server.stop(5)
+        logger.info("Server shutdown complete")

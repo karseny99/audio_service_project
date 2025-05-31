@@ -10,4 +10,5 @@ class GetChunkGeneratorUseCase:
         self._audio_streamer.switch_bitrate(session.current_bitrate)
         self._audio_streamer.seek(session.current_chunk * self._audio_streamer.chunk_size)
         async for chunk in self._audio_streamer.chunks():
+            session.total_chunks_sent += 1
             yield chunk

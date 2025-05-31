@@ -55,7 +55,7 @@ class Container(containers.DeclarativeContainer):
 
     session_repo = providers.Factory(
         RedisStreamingRepository,
-        redis=redis_client
+        redis_client=redis_client
     )
     
 

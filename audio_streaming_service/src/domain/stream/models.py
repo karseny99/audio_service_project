@@ -30,7 +30,7 @@ class StreamSession:
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     status: StreamStatus = StreamStatus.STARTED
     current_chunk: int = 0
-    chunks_sent: int = 0 # TODO
+    total_chunks_sent: int = 0 
     started_at: datetime = datetime.now()
     paused_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
