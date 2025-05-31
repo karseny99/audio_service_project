@@ -28,7 +28,7 @@ class S3AudioStreamer(AudioStreamer):
         :param path: базовый путь к трекам
         """
         self.bucket_name = bucket_name
-        self.chunk_size = chunk_size
+        self._chunk_size = chunk_size
         self.path = path
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key 
@@ -203,7 +203,7 @@ class S3AudioStreamer(AudioStreamer):
             response = await client.get_object(
                 Bucket=self.bucket_name,
                 Key=self.object_name,
-                Range=f"bytes={self.current_offset}-{min(self.current_offset + self.chunk_size - 1, self.object_size - 1)}"
+                Range=f"bytes={self.current_offset}-{min(self.current_offset + self._chunk_size - 1, self.object_size - 1)}"
             )
             
             async with response['Body'] as stream:
@@ -275,4 +275,13 @@ class S3AudioStreamer(AudioStreamer):
     @property
     def total_chunks(self) -> int:
         self._validate_initialized()
-        return (self.object_size + self.chunk_size - 1) // self.chunk_size
+        return (self.object_size + self._chunk_size - 1) // self._chunk_size
+    
+
+    @property
+    def chunk_size(self) -> int:
+        '''
+            size of single chunk in bytes
+        '''
+        self._validate_initialized()
+        return self._chunk_size

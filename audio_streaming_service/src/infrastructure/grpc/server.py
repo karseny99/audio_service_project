@@ -9,9 +9,16 @@ from datetime import datetime
 import uuid
 
 from src.applications.use_cases.get_session import GetSessionUseCase
+from src.applications.use_cases.update_session import UpdateSessionUseCase
 from src.applications.use_cases.chunk_generator import GetChunkGeneratorUseCase
 from src.applications.use_cases.ack_chunks import AcknowledgeChunksUseCase
-from src.applications.use_cases.control_session import AcknowledgeChunksUseCase
+from src.applications.use_cases.control_session import (
+    PauseSessionUseCase,
+    ResumeSessionUseCase,
+    StopSessionUseCase,
+    ChangeSessionBitrateUseCase,
+    ChangeSessionOffsetUseCase
+)
 from src.core.protos.generated import streaming_pb2, streaming_pb2_grpc
 from src.domain.stream.models import StreamSession, StreamStatus
 from src.core.exceptions import UnknownMessageReceived
@@ -31,13 +38,26 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
     @inject
     def __init__(
             self,
-            get_session_use_case: GetSessionUseCase = Provide[Container.get_session_use_case],
-            get_chunk_generator_use_case: GetChunkGeneratorUseCase = Provide[Container.get_chunk_generator_use_case],
-            acknowledge_chunks_use_case: AcknowledgeChunksUseCase = Provide[Container.get_ack_chunks_use_case]
+            get_session_use_case:              GetSessionUseCase =              Provide[Container.get_session_use_case],
+            get_chunk_generator_use_case:      GetChunkGeneratorUseCase =       Provide[Container.get_chunk_generator_use_case],
+            acknowledge_chunks_use_case:       AcknowledgeChunksUseCase =       Provide[Container.get_ack_chunks_use_case],
+            pause_session_use_case:            PauseSessionUseCase =            Provide[Container.get_pause_session_use_case],
+            resume_session_use_case:           ResumeSessionUseCase =           Provide[Container.get_resume_session_use_case],
+            stop_session_use_case:             StopSessionUseCase =             Provide[Container.get_stop_session_use_case],
+            change_session_bitrate_use_case:   ChangeSessionBitrateUseCase =    Provide[Container.get_change_session_bitrate_use_case],
+            change_session_offset_use_case:    ChangeSessionOffsetUseCase =     Provide[Container.get_change_session_offset_use_case],
+            update_session_use_case:           UpdateSessionUseCase =           Provide[Container.get_update_session_use_case]
         ):
+
         self._get_session_use_case = get_session_use_case
         self._get_chunk_generator_use_case = get_chunk_generator_use_case 
         self._acknowledge_chunks_use_case = acknowledge_chunks_use_case
+        self._pause_session_use_case = pause_session_use_case
+        self._resume_session_use_case = resume_session_use_case
+        self._stop_session_use_case = stop_session_use_case
+        self._change_session_bitrate_use_case = change_session_bitrate_use_case
+        self._change_session_offset_use_case = change_session_offset_use_case
+        self._update_session_use_case = update_session_use_case
 
     async def StreamAudio(
             self, 
@@ -47,7 +67,8 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
         session = None
         try:
             session = await self._init_session(request_iterator)
-            
+            yield self._create_session_info_message(session)
+
             while session.is_active():
                 try:
                     chunk_generator = self._get_chunk_generator_use_case.execute(
@@ -56,23 +77,39 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
                     
                     async for chunk in chunk_generator:
                         # Обрабатываем все накопленные сообщения
+                        if await self._is_connection_aborted(context):
+                            logger.info(f"Connection aborted for session {session.session_id}")
+                            return
+
                         await self._process_client_messages(session)
                         
                         # Проверяем статус после обработки сообщений
                         if not session.should_continue():
                             if session.status == StreamStatus.PAUSED:
-                                await self._wait_for_resume(session)
+                                await self._wait_for_resume(session, context)
                             break
                              
                         # Отправляем чанк и обновляем состояние
-                        yield self._create_chunk_message(chunk)
+                        yield streaming_pb2.ServerMessage(
+                            chunk=streaming_pb2.AudioChunk(
+                                data=chunk.data,
+                                number=chunk.number,
+                                is_last=chunk.is_last,
+                                bitrate=chunk.bitrate,
+                            )
+                        )
+
                         session.current_chunk = chunk.number + 1
                         
+                        if session.current_chunk % 30 == 0:
+                            await self._update_session_use_case.execute(session)
+
                         if chunk.is_last:
                             session.status = StreamStatus.FINISHED
                             session.finished_at = datetime.now()
                 
                 except _StreamRestartException:
+                    yield self._create_session_info_message(session)
                     continue  # Перезапускаем цикл с новыми параметрами
                     
         except Exception as e:
@@ -81,6 +118,13 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
         finally:
             if session:
                 session.cleanup()
+
+    async def _is_connection_aborted(self, context) -> bool:
+        try:
+            # Для grpc.aio
+            return context.done() or await context.is_active() is False
+        except Exception:
+            return True
 
 
     async def _init_session(self, request_iterator) -> StreamSession:
@@ -121,6 +165,26 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
         except Exception as e:
             raise StreamInitError(f"Session initialization failed: {str(e)}")
     
+    def _create_session_info_message(self, session: StreamSession) -> streaming_pb2.ServerMessage:
+        return streaming_pb2.ServerMessage(
+            session=streaming_pb2.SessionInfo(
+                session_id=session.session_id,
+                current_bitrate=session.current_bitrate,
+                current_chunk=session.current_chunk,
+                total_chunks=session.track.total_chunks,
+                status=self._convert_status_proto(session.status),            
+            )
+        )
+
+    def _convert_status_proto(self, status: StreamStatus):
+        if status == StreamStatus.PAUSED:
+            return streaming_pb2.SessionInfo.Status.PAUSED
+        elif status == StreamStatus.STOPPED:
+            return streaming_pb2.SessionInfo.Status.STOPPED
+        else:
+            return streaming_pb2.SessionInfo.Status.ACTIVE
+
+
     async def _read_client_messages(self, request_iterator, message_queue):
         """Читает сообщения от клиента и помещает в очередь сессии"""
         try:
@@ -132,11 +196,13 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             logger.info("Client message reader stopped")
 
 
-    async def _wait_for_resume(self, session):
-        """Ожидает возобновления сессии после паузы"""
+    async def _wait_for_resume(self, session: StreamSession, context):
         while session.status == StreamStatus.PAUSED and session.is_active():
+            if await self._is_connection_aborted(context):
+                return
+                
+            await asyncio.sleep(0.5)
             await self._process_client_messages(session)
-            await asyncio.sleep(0.1)  # Небольшая задержка для CPU
 
 
     async def _process_client_messages(self, session):
@@ -153,23 +219,25 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
     async def _handle_control(self, request: streaming_pb2.ClientMessage, session: StreamSession):
         try:
             if request.action == streaming_pb2.StreamControl.PAUSE:
-                self._handle_pause(session)
+                self._pause_session_use_case.execute(session)
                 
             elif request.action == streaming_pb2.StreamControl.RESUME:
-                self._handle_resume(session)
+                self._resume_session_use_case.execute(session)
                 
             elif request.action == streaming_pb2.StreamControl.STOP:
-                self._handle_stop(session)
+                self._stop_session_use_case.execute(session)
                 
             elif request.action == streaming_pb2.StreamControl.CHANGE_BITRATE:
-                await self._handle_change_bitrate(request, session)
-                
+                await self._change_session_bitrate_use_case.execute(request.bitrate, session)
+                raise _StreamRestartException("Bitrate changed, chunk gen restart required")
             elif request.action == streaming_pb2.StreamControl.SEEK:
-                self._handle_seek(request, session)
-                
+                self._change_session_offset_use_case(request.chunk_num, session)
+                raise _StreamRestartException("Offset changed, chunk gen restart required")
             else:
                 raise UnknownMessageReceived(f"Unknown control action: {request}")
-                
+        
+        except _StreamRestartException:
+            raise
         except Exception as e:
             logger.error(f"Control action failed: {str(e)}")
             raise

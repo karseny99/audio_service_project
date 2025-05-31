@@ -15,3 +15,15 @@ class AccessFail(ValueError):
 
 class UnknownMessageReceived(ValueError):
     pass
+
+class InvalidUseOfControlUseCase(ValueError):
+    pass
+
+class SessionRepositoryError(Exception):
+    pass
+
+class SessionSerializationError(SessionRepositoryError):
+    pass
+
+class SessionDeserializationError(SessionRepositoryError):
+    pass

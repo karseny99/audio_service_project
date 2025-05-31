@@ -78,3 +78,6 @@ class AudioStreamer(ABC):
     def total_chunks(self) -> int:
         raise NotImplementedError
         
+    @abstractproperty
+    def chunk_size(self) -> int:
+        raise NotImplementedError

@@ -6,11 +6,12 @@ from datetime import datetime
 
 import uuid
 
+from src.core.exceptions import BitrateNotFound
+
 class StreamStatus(Enum):
     STARTED = auto()
     PAUSED = auto()
     STOPPED = auto()
-    FINISHED = auto()
     SHOULD_RESTART = auto()
 
 
@@ -29,6 +30,7 @@ class StreamSession:
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     status: StreamStatus = StreamStatus.STARTED
     current_chunk: int = 0
+    chunks_sent: int = 0 # TODO
     started_at: datetime = datetime.now()
     paused_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
@@ -64,7 +66,10 @@ class StreamSession:
         self.status = StreamStatus.STOPPED
         self.finished_at = datetime.now()
 
-
+    def switch_bitrate(self, new_bitrate: str):
+        if new_bitrate not in self.track.available_bitrates:
+            raise BitrateNotFound(f"No such bitrate for track, available are {self.track.available_bitrates}")
+        self.current_bitrate = new_bitrate
 
 
 @dataclass
