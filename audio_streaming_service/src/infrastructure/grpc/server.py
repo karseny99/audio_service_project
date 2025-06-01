@@ -95,7 +95,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
                             break
                              
                         # Отправляем чанк и обновляем состояние
-                        logger.warn(f"Chunks sent: {chunk.number}/{session.track.total_chunks}")
+                        logger.debug(f"Chunks sent: {chunk.number}/{session.track.total_chunks - 1}")
                         yield self._create_chunk_message(chunk)
 
                         session.current_chunk = chunk.number + 1
@@ -123,6 +123,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
         finally:
             if session:
                 await self._stop_session_use_case.execute(session)
+                yield self._create_session_info_message(session)
 
     async def _is_connection_aborted(self, context) -> bool:
         return False
