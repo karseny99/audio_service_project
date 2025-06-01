@@ -7,7 +7,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
         # Пропускаем публичные пути
-        if re.match(r"^/auth", path) or path in ("/health", "/docs", "/openapi.json"):
+        if re.match(r"^/auth", path) or path in ("/health", "/docs", "/openapi.json", "/favicon.ico", "/", "/redoc", "/metrics"):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")

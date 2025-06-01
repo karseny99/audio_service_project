@@ -42,12 +42,14 @@ from src.services.user_service import register_user, get_user_info
 from src.core.middleware.auth import AuthMiddleware
 import random
 
+from src.core.middleware.metrics import metrics_middleware
 
 from fastapi import FastAPI
 from src.core.container import Container
 from src.api.v1.auth import router as auth_router
 from src.api.v1.users import router as users_router
 import uvicorn
+from src.api import metrics
 
 app = FastAPI(title="API Gateway")
 container = Container()
@@ -55,7 +57,8 @@ app.container = container
 app.include_router(auth_router)
 app.include_router(users_router)
 app.add_middleware(AuthMiddleware)
-
+app.middleware("http")(metrics_middleware)
+app.include_router(metrics.router)
 
 if __name__ == "__main__":
 
