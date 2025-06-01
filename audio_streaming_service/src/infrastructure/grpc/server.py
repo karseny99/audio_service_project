@@ -21,7 +21,7 @@ from src.applications.use_cases.control_session import (
 )
 from src.core.protos.generated import streaming_pb2, streaming_pb2_grpc
 from src.domain.stream.models import StreamSession, StreamStatus, AudioChunk
-from src.core.exceptions import UnknownMessageReceived
+from src.core.exceptions import UnknownMessageReceived, AccessFail
 from src.core.di import Container
 from src.core.logger import logger
 from src.core.config import settings
@@ -73,6 +73,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             logger.info(f"Connection received{context}")
             session = await self._init_session(request_iterator)
             yield self._create_session_info_message(session)
+            
             while session.is_active():
                 try:
                     chunk_generator = self._get_chunk_generator_use_case.execute(
@@ -94,6 +95,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
                             break
                              
                         # Отправляем чанк и обновляем состояние
+                        logger.warn(f"Chunks sent: {chunk.number}/{session.track.total_chunks}")
                         yield self._create_chunk_message(chunk)
 
                         session.current_chunk = chunk.number + 1
@@ -104,13 +106,18 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
                         if chunk.is_last:
                             session.status = StreamStatus.STOPPED
                             session.finished_at = datetime.now()
-                
+
                 except _StreamRestartException:
                     yield self._create_session_info_message(session)
                     continue  # Перезапускаем цикл с новыми параметрами audio streamer
+
+            logger.warn(f"Session {session.session_id} finished")
         except _StreamCloseException:
             logger.info(f"Stream for session {session.session_id} closed")
-        except Exception as e:
+        except AccessFail as e:
+            logger.error(f"No such file {str(e)}")
+            await context.abort(StatusCode.NOT_FOUND, str(e))
+        except (Exception, StreamInitError) as e:
             # await self._handle_error(context, e)
             await context.abort(StatusCode.INTERNAL, str(e))
         finally:
@@ -131,6 +138,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
         try:
             # Ждем начальное сообщение StartStream
             first_message = await anext(request_iterator)
+            logger.info(f"Initializing session with {first_message}")
             if not first_message.HasField("start"):
                 raise ValueError("First message must be StartStream")
             
@@ -158,6 +166,8 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             
             return session
         
+        except AccessFail:
+            raise
         except Exception as e:
             raise StreamInitError(f"Session initialization failed: {str(e)}")
     
@@ -172,6 +182,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
         )
 
     def _create_session_info_message(self, session: StreamSession) -> streaming_pb2.ServerMessage:
+        logger.info(f"Notifying client about session changes")
         return streaming_pb2.ServerMessage(
             session=streaming_pb2.SessionInfo(
                 session_id=session.session_id,

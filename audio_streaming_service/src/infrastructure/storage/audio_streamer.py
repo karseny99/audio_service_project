@@ -20,7 +20,7 @@ class S3AudioStreamer(AudioStreamer):
         aws_access_key_id: str,
         aws_secret_access_key: str,
         endpoint_url: str,
-        chunk_size: int = ChunkSize.DEFAULT,
+        chunk_size: int = ChunkSize.MICRO,
         path: str = "",
     ):
         """
@@ -79,6 +79,7 @@ class S3AudioStreamer(AudioStreamer):
         self.track_id = track_id
         self.current_bitrate = initial_bitrate
         await self._refresh_object_info()
+        self.current_offset = 0
         self._initialized = True
 
     def _validate_initialized(self):
@@ -107,6 +108,7 @@ class S3AudioStreamer(AudioStreamer):
             ).get('duration', self._estimate_duration()))
             
         except Exception as e:
+            logger.warning(f"No such file {self.object_name}")
             raise AccessFail(f"Error accessing {self.object_name}: {str(e)}")
 
     def _estimate_duration(self) -> float:
@@ -151,6 +153,8 @@ class S3AudioStreamer(AudioStreamer):
         if new_bitrate == self.current_bitrate:
             return
 
+        logger.info(f"Current position in file: {self.current_offset}")
+
         if new_bitrate not in self.available_bitrates:
             raise BitrateNotFound("No such bitrate found")
 
@@ -163,6 +167,7 @@ class S3AudioStreamer(AudioStreamer):
         
         # Восстанавливаем позицию в новом файле
         self.set_current_time(current_time)
+        logger.info(f"Updated position in file: {self.current_offset}")
 
     def get_current_time(self) -> float:
         """
@@ -231,7 +236,7 @@ class S3AudioStreamer(AudioStreamer):
         self.current_offset = offset_bytes
         logger.warn(f"current offset switched to {self.current_offset}")
         
-    async def chunks(self, start_pos: Union[int, float, None] = 0) -> AsyncGenerator[AudioChunk, None]:
+    async def chunks(self, start_pos: Union[int, float, None] = None) -> AsyncGenerator[AudioChunk, None]:
         """Генератор чанков"""
         self._validate_initialized()
         
@@ -261,7 +266,7 @@ class S3AudioStreamer(AudioStreamer):
                 is_last=is_last,
                 bitrate=self.current_bitrate,
             )
-            await asyncio.sleep(2.0)
+            await asyncio.sleep(.1)
             chunk_number += 1
             remaining_bytes = self.object_size - self.current_offset
 

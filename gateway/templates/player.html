@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Stream Controller</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Audio Stream Controller</h1>
+    
+    <div>
+        <div style="margin-bottom: 10px;">
+            <label>Track ID: <input type="text" id="trackId" value="test_track"></label>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>Bitrate: 
+                <select id="bitrateSelect">
+                    <option value="320">320</option>
+                    <option value="128" selected>128</option>
+                    <option value="64">64</option>
+                </select>
+            </label>
+        </div>
+        
+        <button onclick="startStream()">Start Stream</button>
+        <button onclick="controlStream('PAUSE')">Pause</button>
+        <button onclick="controlStream('RESUME')">Resume</button>
+        <button onclick="controlStream('STOP')">Stop</button>
+        <button onclick="changeBitrate()">Change Bitrate</button>
+    </div>
+    
+    <div>
+        <h3>Current Session Info:</h3>
+        <pre id="sessionInfo">Not started</pre>
+    </div>
+    
+    <div>
+        <h3>Progress:</h3>
+        <div id="progress">0/0</div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let websocket = null;
+        
+        function startStream() {
+            const trackId = document.getElementById('trackId').value;
+            const bitrate = document.getElementById('bitrateSelect').value;
+            
+            axios.post('/start_stream', {
+                track_id: trackId,
+                user_id: '1',
+                bitrate: bitrate
+            }).then(response => {
+                sessionId = response.data.session_id;
+                updateSessionInfo(response.data);
+                connectWebSocket();
+            }).catch(console.error);
+        }
+        
+        function controlStream(action) {
+            if (!sessionId) {
+                alert('No active session');
+                return;
+            }
+            
+            axios.post(`/control_stream/${sessionId}`, {
+                action: action
+            }).then(response => {
+                updateSessionInfo(response.data);
+            }).catch(console.error);
+        }
+        
+        function changeBitrate() {
+            if (!sessionId) {
+                alert('No active session');
+                return;
+            }
+            
+            const newBitrate = document.getElementById('bitrateSelect').value;
+            axios.post(`/control_stream/${sessionId}`, {
+                action: 'CHANGE_BITRATE',
+                bitrate: newBitrate
+            }).then(response => {
+                updateSessionInfo(response.data);
+            }).catch(console.error);
+        }
+        
+        function connectWebSocket() {
+            if (websocket) websocket.close();
+            
+            websocket = new WebSocket(`ws://${window.location.host}/ws/${sessionId}`);
+            
+            websocket.onmessage = (event) => {
+                const chunkNum = parseInt(event.data);
+                document.getElementById('progress').innerText = 
+                    `${chunkNum}/${currentTotalChunks}`;
+            };
+            
+            websocket.onclose = () => {
+                console.log('WebSocket disconnected');
+            };
+        }
+        
+        let currentTotalChunks = 0;
+        
+        function updateSessionInfo(data) {
+            currentTotalChunks = data.total_chunks || 0;
+            
+            document.getElementById('sessionInfo').innerText = 
+                `Session ID: ${data.session_id}\n` +
+                `Status: ${data.status}\n` +
+                `Current Bitrate: ${data.current_bitrate}\n` +
+                `Available bitrates: ${data.available_bitrates.join(', ')}\n` +
+                `Chunk size: ${data.chunk_size}\n` +
+                `Total chunks: ${data.total_chunks}`;
+                
+            // Обновляем выбранный битрейт в select
+            const bitrateSelect = document.getElementById('bitrateSelect');
+            if (data.current_bitrate && Array.isArray(data.available_bitrates)) {
+                if (data.available_bitrates.includes(data.current_bitrate)) {
+                    bitrateSelect.value = data.current_bitrate;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -59,7 +59,7 @@ class AudioStreamer(ABC):
     @abstractmethod
     async def chunks(
         self, 
-        start_pos: Union[int, float] = 0
+        start_pos: Union[int, float, None]
     ) -> AsyncGenerator[AudioChunk, None]:
         """Генератор чанков трека"""
         raise NotImplementedError

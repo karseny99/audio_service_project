@@ -26,7 +26,7 @@ class GetSessionUseCase:
         
         if session_id:
             session = await self._session_repo.get(session_id=session_id)
-            self._audio_streamer.initialize(session.track.track_id, session.current_bitrate)
+            await self._audio_streamer.initialize(session.track.track_id, session.current_bitrate)
             self._audio_streamer.seek(session.current_chunk * self._audio_streamer.chunk_size)
             return session
         
