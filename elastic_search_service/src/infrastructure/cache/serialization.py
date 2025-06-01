@@ -1,31 +1,27 @@
-# src/infrastructure/cache/serialization.py
-
 import json
 from datetime import date, datetime
 from typing import Any, Type
-from dataclasses import is_dataclass
+from pydantic import BaseModel
+import logging 
 
-from src.domain.cache.serialization import CacheSerializer
+logger = logging.getLogger(__name__)
 
-class DomainJsonSerializer(CacheSerializer):
+class DomainJsonSerializer:
     def serialize(self, obj: Any) -> bytes:
-        if obj is None:
-            return b"null"
+        if isinstance(obj, BaseModel):
+            return obj.json().encode("utf-8")
+        return json.dumps(obj).encode("utf-8")
 
-        def default(o):
-            if isinstance(o, (date, datetime)):
-                return o.isoformat()
-            if is_dataclass(o):
-                return o.__dict__
-            if hasattr(o, "__dict__"):
-                return o.__dict__
-            raise TypeError(f"Type {type(o)} not JSON serializable")
-
-        return json.dumps(obj, default=default).encode("utf-8")
-
-    def deserialize(self, data: bytes, target_type: Type) -> Any:
+    def deserialize(self, data: bytes, target_type: Type = None) -> Any:
         if data == b"null":
             return None
+        
         decoded = json.loads(data.decode("utf-8"))
-        # В этом сервисе мы можем возвращать простой словарь или список словарей
+        
+        if target_type and issubclass(target_type, BaseModel):
+            try:
+                return target_type.parse_obj(decoded)
+            except Exception as e:
+                logger.error(f"Deserialization error: {str(e)}")
+                return decoded
         return decoded

@@ -3,6 +3,8 @@ from typing import Callable, Optional, Any, Dict
 from src.core.logger import logger
 from src.domain.cache.cache_repository import CacheTTL
 import json
+import inspect
+import hashlib
 
 def cached(
     key_template: Optional[str] = None,
@@ -11,45 +13,50 @@ def cached(
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
+            # 1. Проверка зависимостей кэширования
             cache_repo = getattr(self, "_cache_repo", None)
             _serializer = getattr(self, "_cache_serializer", None)
             
             if not cache_repo or not _serializer:
                 raise AttributeError(f"Cache repository or serializer not found in {self.__class__.__name__}")
 
-            if key_template is None:
-                cache_key_parts = [
-                    self.__class__.__name__,
-                    func.__name__,
-                    *[str(a) for a in args],
-                    *[f"{k}={v}" for k, v in sorted(kwargs.items())]
-                ]
-                cache_key = ":".join(cache_key_parts)
-            else:
-                safe_kwargs = {}
-                for k, v in kwargs.items():
-                    if isinstance(v, list):
-                        safe_kwargs[k] = ",".join(map(str, v))
-                    elif v is None:
-                        safe_kwargs[k] = "null"
-                    elif hasattr(v, 'isoformat'):  # Для дат
-                        safe_kwargs[k] = v.isoformat()
-                    else:
-                        safe_kwargs[k] = str(v)
-                
-                safe_args = [str(a) if a is not None else "null" for a in args]
-                
+            # 2. Поиск объекта запроса в аргументах
+            request = None
+            for arg in args:
+                if hasattr(arg, "dict") and callable(arg.dict):
+                    request = arg
+                    break
+            
+            if not request:
+                for _, value in kwargs.items():
+                    if hasattr(value, "dict") and callable(value.dict):
+                        request = value
+                        break
+            
+            # 3. Генерация ключа кэша
+            if key_template and request:
                 try:
-                    cache_key = key_template.format(*safe_args, **safe_kwargs)
-                except (KeyError, IndexError) as e:
-                    logger.warning(f"Key formatting error: {e}. Using fallback key")
+                    # Создаем хеш запроса для уникального ключа
+                    request_hash = hashlib.md5(
+                        json.dumps(request.dict(sort_keys=True)).encode()
+                    ).hexdigest()
+                    cache_key = f"{func.__name__}_{request_hash}"
+                except Exception as e:
+                    logger.warning(f"Key generation error: {e}")
                     cache_key = f"{func.__name__}_fallback_key"
+            else:
+                # Резервный вариант генерации ключа
+                cache_key = f"{func.__name__}_{str(args)}_{str(kwargs)}"
 
+            # 4. Проверка кэша
             cached_data = await cache_repo.get(cache_key)
             if cached_data is not None:
                 logger.debug(f"Cache hit for key {cache_key}")
-                return _serializer.deserialize(cached_data, func.__annotations__.get("return"))
+                # Получаем тип возвращаемого значения из аннотаций функции
+                return_type = func.__annotations__.get("return")
+                return _serializer.deserialize(cached_data, return_type)
 
+            # 5. Выполнение функции и кэширование результата
             result = await func(self, *args, **kwargs)
             
             serialized = _serializer.serialize(result)
