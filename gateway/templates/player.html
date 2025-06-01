@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Stream Controller</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+        
+        .control-panel {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:nth-child(2) {
+            background-color: #f39c12;
+        }
+        
+        button:nth-child(2):hover {
+            background-color: #e67e22;
+        }
+        
+        button:nth-child(3) {
+            background-color: #2ecc71;
+        }
+        
+        button:nth-child(3):hover {
+            background-color: #27ae60;
+        }
+        
+        button:nth-child(4) {
+            background-color: #e74c3c;
+        }
+        
+        button:nth-child(4):hover {
+            background-color: #c0392b;
+        }
+        
+        button:nth-child(5) {
+            background-color: #9b59b6;
+        }
+        
+        button:nth-child(5):hover {
+            background-color: #8e44ad;
+        }
+        
+        .info-panel {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-weight: 500;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        #progress {
+            font-size: 18px;
+            font-weight: 500;
+            color: #2c3e50;
+            text-align: center;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio Stream Controller</h1>
+    
+    <div class="control-panel">
+        <div class="form-group">
+            <label for="trackId">Track ID</label>
+            <input type="text" id="trackId" value="test_track">
+        </div>
+        
+        <div class="form-group">
+            <label for="bitrateSelect">Bitrate</label>
+            <select id="bitrateSelect">
+                <option value="320">320 kbps (High Quality)</option>
+                <option value="128" selected>128 kbps (Standard Quality)</option>
+                <option value="64">64 kbps (Low Quality)</option>
+            </select>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="startStream()">Start Stream</button>
+            <button onclick="controlStream('PAUSE')">Pause</button>
+            <button onclick="controlStream('RESUME')">Resume</button>
+            <button onclick="controlStream('STOP')">Stop</button>
+            <button onclick="changeBitrate()">Change Bitrate</button>
+        </div>
+    </div>
+    
+    <div class="info-panel">
+        <h3>Current Session Info</h3>
+        <pre id="sessionInfo">Not started</pre>
+    </div>
+    
+    <div class="info-panel">
+        <h3>Progress</h3>
+        <div id="progress">0/0</div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let websocket = null;
+        
+        function startStream() {
+            const trackId = document.getElementById('trackId').value;
+            const bitrate = document.getElementById('bitrateSelect').value;
+            
+            axios.post('/start_stream', {
+                track_id: trackId,
+                user_id: '1',
+                bitrate: bitrate
+            }).then(response => {
+                sessionId = response.data.session_id;
+                updateSessionInfo(response.data);
+                connectWebSocket();
+            }).catch(console.error);
+        }
+        
+        function controlStream(action) {
+            if (!sessionId) {
+                alert('No active session');
+                return;
+            }
+            
+            axios.post(`/control_stream/${sessionId}`, {
+                action: action
+            }).then(response => {
+                updateSessionInfo(response.data);
+            }).catch(console.error);
+        }
+        
+        function changeBitrate() {
+            if (!sessionId) {
+                alert('No active session');
+                return;
+            }
+            
+            const newBitrate = document.getElementById('bitrateSelect').value;
+            axios.post(`/control_stream/${sessionId}`, {
+                action: 'CHANGE_BITRATE',
+                bitrate: newBitrate
+            }).then(response => {
+                updateSessionInfo(response.data);
+            }).catch(console.error);
+        }
+        
+        function connectWebSocket() {
+            if (websocket) websocket.close();
+            
+            websocket = new WebSocket(`ws://${window.location.host}/ws/${sessionId}`);
+            
+            websocket.onmessage = (event) => {
+                const chunkNum = parseInt(event.data);
+                document.getElementById('progress').innerText = 
+                    `${chunkNum + 1}/${currentTotalChunks}`;
+            };
+            
+            websocket.onclose = () => {
+                console.log('WebSocket disconnected');
+            };
+        }
+        
+        let currentTotalChunks = 0;
+        
+        function updateSessionInfo(data) {
+            currentTotalChunks = data.total_chunks;
+            
+            document.getElementById('sessionInfo').innerText = 
+                `Session ID: ${data.session_id}\n` +
+                `Status: ${data.status}\n` +
+                `Current Bitrate: ${data.current_bitrate}\n` +
+                `Available bitrates: ${data.available_bitrates.join(', ')}\n` +
+                `Chunk size: ${data.chunk_size}\n` +
+                `Total chunks: ${data.total_chunks}`;
+                
+            // Обновляем выбранный битрейт в select
+            const bitrateSelect = document.getElementById('bitrateSelect');
+            if (data.current_bitrate && Array.isArray(data.available_bitrates)) {
+                if (data.available_bitrates.includes(data.current_bitrate)) {
+                    bitrateSelect.value = data.current_bitrate;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

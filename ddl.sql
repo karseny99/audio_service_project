@@ -132,4 +132,4 @@ CREATE TABLE music_catalog.track_bitrates (
     track_id BIGINT REFERENCES music_catalog.tracks(track_id) ON DELETE CASCADE,
     bitrate_id INT REFERENCES music_catalog.bitrates(bitrate_id) ON DELETE CASCADE,
     PRIMARY KEY (track_id, bitrate_id)
-);
+
