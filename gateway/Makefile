@@ -10,6 +10,16 @@ generate:
 		--grpc_python_out=./src/protos/user_context/generated \
 		--pyi_out=./src/protos/user_context/generated \
 		./src/protos/user_context/commands.proto
+	
+	poetry run python3 -m grpc_tools.protoc \
+        -Isrc/protos/user_context/ \
+        --python_out=./src/protos/user_context/generated \
+        --grpc_python_out=./src/protos/user_context/generated \
+        --pyi_out=./src/protos/user_context/generated \
+        ./src/protos/user_context/track.proto
+
+	sed -i 's/^import track_pb2/from src.protos.user_context.generated import track_pb2/' src/protos/user_context/generated/*.py
+
 
 	# 2. Генерируем код
 	poetry run python3 -m grpc_tools.protoc \

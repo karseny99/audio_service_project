@@ -10,6 +10,7 @@ CREATE TABLE user_profile.users (
 	email varchar(255) NOT NULL,
 	created_at timestamptz DEFAULT now() NOT NULL,
 	password_hash text NOT NULL,
+    role varchar(255) DEFAULT 'listener',
 	CONSTRAINT users_email_key UNIQUE (email),
 	CONSTRAINT users_pkey PRIMARY KEY (user_id),
 	CONSTRAINT users_username_key UNIQUE (username)
@@ -131,4 +132,4 @@ CREATE TABLE music_catalog.track_bitrates (
     track_id BIGINT REFERENCES music_catalog.tracks(track_id) ON DELETE CASCADE,
     bitrate_id INT REFERENCES music_catalog.bitrates(bitrate_id) ON DELETE CASCADE,
     PRIMARY KEY (track_id, bitrate_id)
-);
+

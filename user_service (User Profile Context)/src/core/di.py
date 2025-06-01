@@ -86,31 +86,6 @@ class Container(containers.DeclarativeContainer):
     )
 
 
-    # redis
-    redis_client = providers.Singleton(
-        RedisClient
-    )
-
-    cache_repository = providers.Factory(
-        RedisCacheRepository,
-        redis=redis_client
-    )
-
-
-    cache_serializer = providers.Singleton(
-        DomainJsonSerializer
-    )
-    
-    user_serializer = providers.Factory(
-        UserSerializer,
-        base_serializer=cache_serializer
-    )
-    
-    simple_serializer = providers.Factory(
-        SimpleSerializer,
-        base_serializer=cache_serializer
-    )
-
     # Use Cases
     register_use_case = providers.Factory(
         RegisterUserUseCase,

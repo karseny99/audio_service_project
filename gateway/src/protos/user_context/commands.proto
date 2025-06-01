@@ -10,9 +10,9 @@ message ChangePasswordRequest {
 }
 
 message RegisterUserRequest {
-    string username = 1;
-    string email = 2;
-    string password = 3;
+  string username = 1;
+  string email = 2;
+  string password = 3;
 }
 
 message RegisterUserResponse {
@@ -40,9 +40,8 @@ message GetUserInfoResponse {
 }
 
 service UserCommandService {
-    // rpc ChangePassword (ChangePasswordCommand) returns (google.protobuf.Empty);
-    rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
-    rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse) {}
-    rpc ChangePassword(ChangePasswordRequest) returns (google.protobuf.Empty);
-    rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
+  rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse) {}
+  rpc ChangePassword(ChangePasswordRequest) returns (google.protobuf.Empty);
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
 }

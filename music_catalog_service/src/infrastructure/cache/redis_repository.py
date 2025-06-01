@@ -1,8 +1,5 @@
-import aioredis
 from typing import Optional
 
-from src.domain.cache.cache_repository import CacheRepository
-from src.core.config import settings
 from src.core.logger import logger
 
 from src.infrastructure.cache.redis_client import RedisClient

@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from src.core.config import settings
 from src.core.logger import logger
-from src.domain.music_catalog.models import Track, Genre, ArtistInfo
+from src.domain.music_catalog.models import Track, Genre, ArtistInfo, DurationMs
 from src.domain.music_catalog.repository import MusicRepository
 
 from src.infrastructure.database.models import TrackORM, TrackArtistORM, TrackGenreORM
@@ -23,36 +23,43 @@ class PostgresMusicRepository(MusicRepository):
         )
 
     @ConnectionDecorator()
-    async def get_by_id(self, track_id: int, session: AsyncSession | None = None) -> Track | None:
+    async def get_by_artist(
+        self,
+        artist_id: int,
+        offset: int = 0,
+        limit: int = 50,
+        session: AsyncSession | None = None
+    ) -> list[Track]:
         stmt = (
-            select(TrackORM)
-            .options(
-                selectinload(TrackORM.artists).selectinload(TrackArtistORM.artist),
-                selectinload(TrackORM.genres).selectinload(TrackGenreORM.genre)
-            )
-            .where(TrackORM.track_id == track_id)
-        )
+             select(TrackORM)
+             .join(TrackORM.artists)
+             .options(
+                 selectinload(TrackORM.artists).selectinload(TrackArtistORM.artist),
+                 selectinload(TrackORM.genres).selectinload(TrackGenreORM.genre)
+             )
+            .where(TrackArtistORM.artist_id == artist_id)
+            .offset(offset)
+            .limit(limit)
+         )
         result = await session.execute(stmt)
-        track_orm = result.scalar_one_or_none()
-        
-        if not track_orm:
-            return None
-            
-        return self._convert_to_domain(track_orm)
+        return [self._convert_to_domain(track) for track in result.scalars()]
 
     @ConnectionDecorator()
-    async def get_by_artist(self, artist_id: int, session: AsyncSession | None = None) -> list[Track]:
+    async def get_by_genre(self, genre_id: int, offset: int = 0, limit: int = 50, session: AsyncSession | None = None) -> list[Track]:
         stmt = (
             select(TrackORM)
-            .join(TrackORM.artists)
+            .join(TrackORM.genres)
             .options(
                 selectinload(TrackORM.artists).selectinload(TrackArtistORM.artist),
                 selectinload(TrackORM.genres).selectinload(TrackGenreORM.genre)
             )
-            .where(TrackArtistORM.artist_id == artist_id)
+            .where(TrackGenreORM.genre_id == genre_id)
+            .offset(offset)
+            .limit(limit)
         )
         result = await session.execute(stmt)
         return [self._convert_to_domain(track) for track in result.scalars()]
+
 
     @ConnectionDecorator()
     async def add(self, track: Track, session: AsyncSession | None = None) -> Track:
@@ -138,7 +145,7 @@ class PostgresMusicRepository(MusicRepository):
         return Track(
             track_id=track_orm.track_id,
             title=track_orm.title,
-            duration=track_orm.duration_ms,
+            duration=DurationMs(value=track_orm.duration_ms),
             artists=[
                 ArtistInfo(
                     artist_id=ta.artist.artist_id,
