@@ -31,7 +31,8 @@ class Settings(BaseSettings):
     KAFKA_USER_CONTEXT_TOPIC: str = 'user-topic'
     KAFKA_PLAYLIST_CONTEXT_TOPIC: str = 'playlist-topic'
     KAFKA_LISTENING_HISTORY_CONTEXT_TOPIC: str = 'listening-history-topic'
-
+    KAFKA_ETL_TOPIC: str = 'etl-topic'
+    
     # KAFKA_SECURITY_PROTOCOL: Optional[str] = None
     # KAFKA_SASL_MECHANISM: Optional[str] = None
     # KAFKA_SASL_USERNAME: Optional[str] = None

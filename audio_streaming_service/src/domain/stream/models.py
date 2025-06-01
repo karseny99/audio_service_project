@@ -27,6 +27,7 @@ class StreamSession:
     user_id: str
     track: AudioTrack
     current_bitrate: str
+    chunk_size: int
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     status: StreamStatus = StreamStatus.STARTED
     current_chunk: int = 0
@@ -56,7 +57,7 @@ class StreamSession:
 
     def is_active(self) -> bool:
         """Проверяет, активна ли сессия (не остановлена и не завершена)"""
-        return self.status not in (StreamStatus.STOPPED, StreamStatus.FINISHED)
+        return self.status != StreamStatus.STOPPED
 
     def cleanup(self):
         """Корректное завершение сессии"""

@@ -1,4 +1,4 @@
-import math
+import asyncio
 from typing import Generator, Optional, Union, List, AsyncGenerator
 from dependency_injector.wiring import inject, Provide
 from aiobotocore.session import get_session
@@ -8,6 +8,10 @@ from src.core.exceptions import BitrateNotFound
 from src.core.exceptions import AccessFail
 from src.domain.stream.repository import AudioStreamer, AudioChunk
 
+class ChunkSize:
+    DEFAULT: int = 32768
+    SMALL: int = 16384
+    MICRO: int = 8192
 
 class S3AudioStreamer(AudioStreamer):
     def __init__(
@@ -16,7 +20,7 @@ class S3AudioStreamer(AudioStreamer):
         aws_access_key_id: str,
         aws_secret_access_key: str,
         endpoint_url: str,
-        chunk_size: int = 32768,
+        chunk_size: int = ChunkSize.DEFAULT,
         path: str = "",
     ):
         """
@@ -187,6 +191,7 @@ class S3AudioStreamer(AudioStreamer):
         self.current_offset = max(0, min(new_offset, self.object_size - 1))
 
     async def read_chunk(self, offset: Optional[Union[int, float]] = None) -> bytes:
+        """Читает один чанк с текущей позиции без изменения состояния"""
         self._validate_initialized()
 
         if offset is not None:
@@ -200,16 +205,16 @@ class S3AudioStreamer(AudioStreamer):
 
         try:
             client = await self._get_client()
+            range_end = min(self.current_offset + self.chunk_size - 1, self.object_size - 1)
             response = await client.get_object(
                 Bucket=self.bucket_name,
                 Key=self.object_name,
-                Range=f"bytes={self.current_offset}-{min(self.current_offset + self._chunk_size - 1, self.object_size - 1)}"
+                Range=f"bytes={self.current_offset}-{range_end}"
             )
             
             async with response['Body'] as stream:
-                chunk_data = await stream.read()
-                self.current_offset += len(chunk_data)
-                return chunk_data
+                return await stream.read()
+                
         except Exception as e:
             raise RuntimeError(f"Error reading chunk: {str(e)}")
 
@@ -224,40 +229,40 @@ class S3AudioStreamer(AudioStreamer):
         if not 0 <= offset_bytes < self.object_size:
             raise ValueError(f"Offset must be between 0 and {self.object_size - 1}")
         self.current_offset = offset_bytes
-
-    async def chunks(self, start_pos: Union[int, float] = 0) -> AsyncGenerator[AudioChunk, None]:
-        """
-        Асинхронный генератор для последовательного чтения чанков
+        logger.warn(f"current offset switched to {self.current_offset}")
         
-        :param start_pos: начальная позиция в байтах (int) или секундах (float)
-        :yield: чанки аудиоданных
-        """
+    async def chunks(self, start_pos: Union[int, float, None] = 0) -> AsyncGenerator[AudioChunk, None]:
+        """Генератор чанков"""
         self._validate_initialized()
-
+        
+        # Устанавливаем начальную позицию
         if isinstance(start_pos, float):
             self.set_current_time(start_pos)
-        else:
+        elif isinstance(start_pos, int):
             self.seek(start_pos)
 
-        self.chunk_counter = 0
+        chunk_number = self.current_offset // self.chunk_size
         remaining_bytes = self.object_size - self.current_offset
 
         while remaining_bytes > 0:
-            chunk_data = await self.read_chunk()
+            chunk_data = await self.read_chunk()  # Читаем без изменения offset
             if not chunk_data:
                 break
                 
-            is_last = (self.current_offset >= self.object_size) or \
-                     (remaining_bytes - len(chunk_data) <= 0)
+            # Фиксируем текущую позицию для этого чанка
+            chunk_start = self.current_offset
+            self.current_offset += len(chunk_data)
+            
+            is_last = (self.current_offset >= self.object_size)
             
             yield AudioChunk(
                 data=chunk_data,
-                number=self.chunk_counter,
+                number=chunk_number,
                 is_last=is_last,
                 bitrate=self.current_bitrate,
             )
-            
-            self.chunk_counter += 1
+            await asyncio.sleep(2.0)
+            chunk_number += 1
             remaining_bytes = self.object_size - self.current_offset
 
     @property

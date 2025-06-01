@@ -4,7 +4,7 @@ from faststream.kafka import KafkaBroker
 
 
 from src.applications.use_cases.get_session import GetSessionUseCase
-from src.applications.use_cases.update_session import UpdateSessionUseCase
+from src.applications.use_cases.save_session import SaveSessionUseCase
 from src.applications.use_cases.chunk_generator import GetChunkGeneratorUseCase
 from src.applications.use_cases.ack_chunks import AcknowledgeChunksUseCase
 from src.applications.use_cases.control_session import (
@@ -17,9 +17,9 @@ from src.applications.use_cases.control_session import (
 )
 from src.infrastructure.storage.audio_streamer import S3AudioStreamer
 from src.infrastructure.database.redis_repository import RedisStreamingRepository
-# from src.infrastructure.kafka.publisher import KafkaEventPublisher
+from src.infrastructure.kafka.publisher import KafkaEventPublisher
 from src.infrastructure.database.redis_client import RedisClient
-# from src.infrastructure.events.converters import UserEventConverters
+from src.infrastructure.events.converters import SessionEventConverters
 # from src.infrastructure.cache.user_serializer import UserSerializer, SimpleSerializer
 
 from src.core.config import settings
@@ -34,19 +34,17 @@ class Container(containers.DeclarativeContainer):
     )
 
     # Kafka зависимости
-    # Этого брокера надо создавать отдельно для консумера
-    # иначе будет плохо
     kafka_broker = providers.Singleton(
         KafkaBroker,
         bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS
     )
 
-    # kafka_publisher = providers.Singleton(
-    #     KafkaEventPublisher,
-    #     broker=kafka_broker,
-    #     destination=settings.KAFKA_USER_CONTEXT_TOPIC, # just to fill the argument
-    #     converters=UserEventConverters,
-    # )
+    kafka_publisher = providers.Singleton(
+        KafkaEventPublisher,
+        broker=kafka_broker,
+        destination=[settings.KAFKA_ETL_TOPIC],
+        converters=SessionEventConverters,
+    )
 
     # redis
     redis_client = providers.Singleton(
@@ -81,13 +79,12 @@ class Container(containers.DeclarativeContainer):
         GetSessionUseCase, 
         session_repo=session_repo,  
         audio_streamer=audio_streamer,
-        # event_publisher=
+        event_publisher=kafka_publisher,
     )
     
-    get_update_session_use_case = providers.Factory(
-        UpdateSessionUseCase, 
+    get_save_session_use_case = providers.Factory(
+        SaveSessionUseCase, 
         session_repo=session_repo,  
-        audio_streamer=audio_streamer,
     )
 
     get_chunk_generator_use_case = providers.Factory(
@@ -97,39 +94,39 @@ class Container(containers.DeclarativeContainer):
 
     get_ack_chunks_use_case = providers.Factory(
         AcknowledgeChunksUseCase,
-        # event_publisher=
+        event_publisher=kafka_publisher,
     )
 
     get_pause_session_use_case = providers.Factory(
         PauseSessionUseCase,
         session_repo=session_repo, 
-        # event_publisher=
+        event_publisher=kafka_publisher,
     )
 
     get_resume_session_use_case = providers.Factory(
         ResumeSessionUseCase,
         session_repo=session_repo, 
-        # event_publisher=,
+        event_publisher=kafka_publisher,
     )
 
     get_stop_session_use_case = providers.Factory(
         StopSessionUseCase,
         session_repo=session_repo, 
-        # event_publisher=,
+        event_publisher=kafka_publisher,
     )
 
     get_change_session_bitrate_use_case = providers.Factory(
         ChangeSessionBitrateUseCase,
         session_repo=session_repo, 
         audio_streamer=audio_streamer,
-        # event_publisher=,
+        event_publisher=kafka_publisher,
     )
 
     get_change_session_offset_use_case = providers.Factory(
         ChangeSessionOffsetUseCase,
         session_repo=session_repo, 
         audio_streamer=audio_streamer,
-        # event_publisher=,
+        event_publisher=kafka_publisher,
     )
 
     @classmethod

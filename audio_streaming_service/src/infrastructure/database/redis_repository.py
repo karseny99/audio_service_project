@@ -7,6 +7,7 @@ from uuid import UUID
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, is_dataclass
+import asyncio
 
 from src.core.logger import logger
 from src.core.exceptions import (
@@ -15,7 +16,7 @@ from src.core.exceptions import (
     SessionRepositoryError,
 )
 
-from src.domain.stream.models import StreamSession
+from src.domain.stream.models import StreamSession, AudioTrack, StreamStatus
 from src.domain.stream.repository import StreamingRepository
 from src.infrastructure.database.redis_client import RedisClient
 
@@ -34,11 +35,26 @@ class RedisStreamingRepository(StreamingRepository):
         self._ttl = ttl_seconds
 
     def _serialize_session(self, session: StreamSession) -> bytes:
-        """Сериализация сессии в bytes для Redis"""
+        """Сериализация сессии в bytes для Redis, исключая несериализуемые поля"""
         try:
-            session_dict = asdict(session)
+            # Создаем копию данных, исключая несериализуемые поля
+            session_dict = {
+                'session_id': session.session_id,
+                'user_id': session.user_id,
+                'current_bitrate': session.current_bitrate,
+                'chunk_size': session.chunk_size,
+                'status': session.status.name,
+                'current_chunk': session.current_chunk,
+                'started_at': session.started_at.isoformat(),
+                'track': {
+                    'track_id': session.track.track_id,
+                    'total_chunks': session.track.total_chunks,
+                    'available_bitrates': session.track.available_bitrates,
+                    'duration_ms': session.track.duration_ms
+                }
+            }
             
-            session_dict['started_at'] = session.started_at.isoformat()
+            # Добавляем опциональные поля
             if session.paused_at:
                 session_dict['paused_at'] = session.paused_at.isoformat()
             if session.finished_at:
@@ -56,20 +72,44 @@ class RedisStreamingRepository(StreamingRepository):
         try:
             session_dict = json.loads(data.decode('utf-8'))
             
-            session_dict['started_at'] = datetime.fromisoformat(session_dict['started_at'])
-            if session_dict.get('paused_at'):
-                session_dict['paused_at'] = datetime.fromisoformat(session_dict['paused_at'])
-            if session_dict.get('finished_at'):
-                session_dict['finished_at'] = datetime.fromisoformat(session_dict['finished_at'])
+            # Восстановление объекта Track
+            track = AudioTrack(
+                track_id=session_dict['track']['track_id'],
+                total_chunks=session_dict['track']['total_chunks'],
+                available_bitrates=session_dict['track']['available_bitrates'],
+                duration_ms=session_dict['track']['duration_ms']
+            )
             
-            return StreamSession(**session_dict)
+            # Восстановление сессии
+            session = StreamSession(
+                session_id=session_dict['session_id'],
+                user_id=session_dict['user_id'],
+                track=track,
+                chunk_size=session_dict['chunk_size'],
+                current_bitrate=session_dict['current_bitrate'],
+                status=StreamStatus[session_dict['status']],
+                current_chunk=session_dict['current_chunk'],
+                started_at=datetime.fromisoformat(session_dict['started_at'])
+            )
+            
+            # Восстановление опциональных полей
+            if 'paused_at' in session_dict:
+                session.paused_at = datetime.fromisoformat(session_dict['paused_at'])
+            if 'finished_at' in session_dict:
+                session.finished_at = datetime.fromisoformat(session_dict['finished_at'])
+            
+            # Несериализуемые поля инициализируем заново
+            session.message_queue = asyncio.Queue()
+            session.reader_task = None
+            
+            return session
         except Exception as e:
             logger.error(f"Session deserialization error: {str(e)}")
             raise SessionDeserializationError("Failed to deserialize session")
 
-    def _get_redis_key(self, session_id: UUID) -> str:
+    def _get_redis_key(self, session_id: str) -> str:
         """Генерирует ключ для Redis"""
-        return f"stream_session:{session_id.hex}"
+        return f"stream_session:{session_id}"
 
     async def get(self, session_id: UUID) -> Optional[StreamSession]:
         """Получить сессию по ID"""

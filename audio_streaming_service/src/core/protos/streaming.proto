@@ -57,11 +57,13 @@ message SessionInfo {
   }
   string session_id = 1;    // Уникальный ID (серверный)
   string current_bitrate = 2;
+  repeated string available_bitrates = 7;  // Новое поле (номер 7)
   int64 current_chunk = 3;
   int64 chunk_size = 4;
   int64 total_chunks = 5;
   Status status = 6;
 }
+
 
 message AudioChunk {
   bytes data = 1;
