@@ -8,10 +8,10 @@ class ChangePasswordUseCase:
     def __init__(
         self,
         user_repo: UserRepository,
-        event_publisher: EventPublisher
+        # event_publisher: EventPublisher
     ):
         self._repo = user_repo
-        self._publisher = event_publisher
+        # self._publisher = event_publisher
 
     async def execute(
         self,

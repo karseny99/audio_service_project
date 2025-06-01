@@ -27,12 +27,30 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
             register_uc = Provide[Container.register_use_case],
             change_password_uc = Provide[Container.change_password_use_case],
             auth_uc = Provide[Container.auth_user_use_case],
-            get_user_info_uc = Provide[Container.get_user_info_use_case]
+            get_user_info_uc = Provide[Container.get_user_info_use_case],
+            get_delete_uc = Provide[Container.delete_use_case]
     ):
         self._register_uc = register_uc
         self._change_uc = change_password_uc
         self._auth_uc = auth_uc
         self._get_user_info_uc = get_user_info_uc
+        self._delete_uc = get_delete_uc
+
+    async def RegisterUser(self, request, context):
+        try:
+            isDeleted = await self._delete_uc.execute(
+                user_id=request.user_id
+            )
+            if isDeleted:
+                return Empty()
+            return context.abort(StatusCode.NOT_FOUND, str(e))
+
+        except ValueObjectException as e:
+            await context.abort(StatusCode.INVALID_ARGUMENT, str(e))
+        except (UsernameAlreadyExistsError, EmailAlreadyExistsError) as e:
+            await context.abort(StatusCode.ALREADY_EXISTS, str(e))
+        except Exception as e:
+            await context.abort(StatusCode.INTERNAL, f"Internal error: {e}")
 
     async def RegisterUser(self, request, context):
         try:

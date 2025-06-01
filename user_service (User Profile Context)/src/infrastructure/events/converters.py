@@ -24,11 +24,7 @@ class UserEventConverters(BaseEventConverter):
     @to_proto.register
     @staticmethod
     def _(event: UserRegistered) -> UserRegisteredProto:
-        return UserRegisteredProto(
-            user_id=event.user_id,
-            # email=event.email,
-            # username=event.username
-        )
+        return UserRegisteredProto(user_id=event.user_id,)
 
     @staticmethod
     def get_headers(event: UserEvent) -> dict:

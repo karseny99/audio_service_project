@@ -8,9 +8,7 @@ class UserEvent:
 @dataclass
 class UserRegistered(UserEvent):
     user_id: str
-    email: str
-    username: str
-   
+
 @dataclass 
 class UserDeleted(UserEvent):
     user_id: str
