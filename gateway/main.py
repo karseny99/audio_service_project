@@ -1,52 +1,14 @@
-# from fastapi import FastAPI
-# from api.v1 import users, playlists
-
-# app = FastAPI()
-# app.include_router(users.router)
-# app.include_router(playlists.router)
-
-'''
-
-    #
-    #   Пример для оптимизированного вызова grpc
-    #
-
-    # В FastAPI роутере 
-    from fastapi import Depends
-
-    async def get_user_stub():
-        channel = get_user_channel()
-        return commands_pb2_grpc.UserCommandServiceStub(channel)
-
-    from fastapi import FastAPI
-    from core.middleware.logging import log_requests
-    from core.logger import setup_logging
-
-    app = FastAPI()
-    setup_logging(settings.LOKI_URL)  # LOKI_URL из env-переменных
-
-    # Подключение middleware
-    app.middleware("http")(log_requests)
-
-
-        
-    @router.post("/register")
-    async def register(
-        stub: UserCommandServiceStub = Depends(get_user_stub)
-    ):
-        await stub.RegisterUser(...)
-
-'''
-
-from src.services.user_service import register_user, get_user_info
 from src.core.middleware.auth import AuthMiddleware
 import random
 
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+
 from src.core.container import Container
 from src.api.v1.auth import router as auth_router
 from src.api.v1.users import router as users_router
+from src.api.v1.streaming import router as streaming_router
 import uvicorn
 
 app = FastAPI(title="API Gateway")
@@ -54,8 +16,16 @@ container = Container()
 app.container = container
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(streaming_router)
 app.add_middleware(AuthMiddleware)
 
+
+
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/")
+async def get_player(request: Request):
+    return templates.TemplateResponse("player.html", {"request": request})
 
 if __name__ == "__main__":
 
@@ -67,7 +37,3 @@ if __name__ == "__main__":
         access_log=True,
         reload=True,
     )
-
-# if __name__ == "__main__":
-#     resp = get_user_info(user_id="3")
-#     print(f"Registered user ID: {resp}")

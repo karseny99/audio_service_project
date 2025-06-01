@@ -112,3 +112,23 @@ CREATE TABLE music_catalog.track_genres (
     genre_id INT NOT NULL REFERENCES music_catalog.genres(genre_id) ON DELETE CASCADE,
     PRIMARY KEY (track_id, genre_id)
 );
+
+CREATE TABLE music_catalog.bitrates (
+    bitrate_id SERIAL PRIMARY KEY,
+    name VARCHAR(20) NOT NULL,  -- Например, "128kbps", "320kbps", "Lossless"
+);
+
+INSERT INTO music_catalog.bitrates (name)
+VALUES 
+    ('96kbps'),
+    ('128kbps'),
+    ('192kbps'),
+    ('320kbps'),
+    ('Lossless');
+
+
+CREATE TABLE music_catalog.track_bitrates (
+    track_id BIGINT REFERENCES music_catalog.tracks(track_id) ON DELETE CASCADE,
+    bitrate_id INT REFERENCES music_catalog.bitrates(bitrate_id) ON DELETE CASCADE,
+    PRIMARY KEY (track_id, bitrate_id)
+);

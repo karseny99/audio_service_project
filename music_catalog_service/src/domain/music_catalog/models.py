@@ -2,7 +2,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, date
 from typing import List
 
-from src.domain.music_catalog.value_objects import TrackId, ArtistId, GenreId, DurationMs
+from src.domain.music_catalog.value_objects import (
+    TrackId, 
+    ArtistId, 
+    GenreId, 
+    DurationMs,
+    Bitrate,
+)
 
 @dataclass(frozen=True)
 class ArtistInfo:
@@ -23,6 +29,7 @@ class Track:
     artists: List[ArtistInfo] = field(default_factory=list)
     genres: List[Genre] = field(default_factory=list)
     explicit: bool = False
+    available_bitrates: List[Bitrate] = field(default_factor=list)
     release_date: date = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 

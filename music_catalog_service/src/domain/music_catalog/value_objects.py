@@ -8,7 +8,14 @@ TrackId = NewType('TrackId', int)
 ArtistId = NewType('ArtistId', int)
 GenreId = NewType('GenreId', int)
 
-# Специфичные value objects
+class Bitrate:
+    SUPPORTED = [128, 192, 320]
+
+    def __init__(self, value: int):
+        if value not in self.SUPPORTED:
+            raise ValueObjectException("Unsupported bitrate")
+        self.value = value
+
 @dataclass(frozen=True)
 class DurationMs:
     value: int
