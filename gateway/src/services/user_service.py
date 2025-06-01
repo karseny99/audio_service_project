@@ -5,6 +5,7 @@ from src.core.dependencies.grpc_clients import get_user_command_stub
 from src.protos.user_context.generated import commands_pb2, commands_pb2_grpc
 from src.core.password_utils import hash_password
 
+from google.protobuf import timestamp_pb2
 
 def register_user(username: str, email: str, password: str) -> str:
     """
@@ -100,6 +101,41 @@ def change_password(user_id: str, old_password: str, new_password: str) -> None:
     )
     try:
         stub.ChangePassword(request, timeout=5.0)
+    except RpcError as e:
+        code = e.code()
+        if code == StatusCode.INVALID_ARGUMENT:
+            raise ValueError(f"Ошибка валидации: {e.details()}")
+        elif code == StatusCode.NOT_FOUND:
+            raise ValueError("Пользователь не найден")
+        elif code == StatusCode.UNAVAILABLE:
+            raise RuntimeError("Сервис пользователей недоступен")
+        else:
+            raise RuntimeError(f"Ошибка gRPC: {code.name}")
+
+def get_user_info(user_id: str) -> dict:
+    """
+    Получает информацию о пользователе через gRPC.
+    Raises:
+      ValueError: если неверные креды
+      RuntimeError: при прочих ошибках
+    """
+
+    print(f"Requesting user {user_id} via gRPC")
+    stub = get_user_command_stub()
+    request = commands_pb2.GetUserInfoRequest(
+        user_id=user_id
+    )
+    print(request)
+    try:
+        response = stub.GetUserInfo(request, timeout=5.0)
+        print(f"Received response: {response}")
+        return {
+            'id' : str(response.user_id),
+            'username' : str(response.username),
+            'email' : str(response.email),
+            'created_at' : response.created_at.ToDatetime()
+        }
+            
     except RpcError as e:
         code = e.code()
         if code == StatusCode.INVALID_ARGUMENT:

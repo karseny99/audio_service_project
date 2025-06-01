@@ -1,4 +1,3 @@
-from src.services.user_service import register_user
 from src.core.middleware.auth import AuthMiddleware
 import random
 
@@ -38,4 +37,3 @@ if __name__ == "__main__":
         access_log=True,
         reload=True,
     )
-
