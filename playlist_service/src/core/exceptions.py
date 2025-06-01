@@ -15,3 +15,6 @@ class TrackNotFoundError(DomainError):
 
 class InsufficientPermission(PermissionError):
     pass
+
+class PlaylistNotFoundError(DomainError):
+    pass

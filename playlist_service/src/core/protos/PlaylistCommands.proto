@@ -1,6 +1,8 @@
 syntax = "proto3";
-import "google/protobuf/empty.proto";
 
+package playlist;
+
+import "google/protobuf/empty.proto";
 
 message AddTrackToPlaylistRequest {
   string playlist_id = 1;
@@ -8,7 +10,64 @@ message AddTrackToPlaylistRequest {
   string user_id = 3;
 }
 
-service PlaylistCommandService {
-  rpc AddTrackToPlaylist (AddTrackToPlaylistRequest) returns (google.protobuf.Empty);
+message CreatePlaylistRequest {
+  string user_id = 1;
+  string title = 2;
+  bool is_public = 3;
 }
 
+message CreatePlaylistResponse {
+  string playlist_id = 1;
+}
+
+message GetUserPlaylistsRequest {
+  string user_id = 1;
+}
+
+message GetUserPlaylistsResponse {
+  repeated PlaylistInfo playlists = 1;
+}
+
+message PlaylistInfo {
+  string playlist_id = 1;
+  string title = 2;
+  bool is_public = 3;
+  int32 track_count = 4;
+}
+
+message GetPlaylistTracksRequest {
+  string playlist_id = 1;
+  optional string requester_id = 2;
+}
+
+message GetPlaylistTracksResponse {
+  repeated TrackInfo tracks = 1;
+}
+
+message TrackInfo {
+  string track_id = 1;
+  string title = 2;
+  int32 duration_ms = 3;
+}
+
+message GetPlaylistSubscribersRequest {
+  string playlist_id = 1;
+  string requester_id = 2;
+}
+
+message GetPlaylistSubscribersResponse {
+  repeated SubscriberInfo subscribers = 1;
+}
+
+message SubscriberInfo {
+  string user_id = 1;
+  string username = 2;
+}
+
+service PlaylistCommandService {
+  rpc AddTrackToPlaylist (AddTrackToPlaylistRequest) returns (google.protobuf.Empty);
+  rpc CreatePlaylist (CreatePlaylistRequest) returns (CreatePlaylistResponse);
+  rpc GetUserPlaylists (GetUserPlaylistsRequest) returns (GetUserPlaylistsResponse);
+  rpc GetPlaylistTracks (GetPlaylistTracksRequest) returns (GetPlaylistTracksResponse);
+  rpc GetPlaylistSubscribers (GetPlaylistSubscribersRequest) returns (GetPlaylistSubscribersResponse);
+}
