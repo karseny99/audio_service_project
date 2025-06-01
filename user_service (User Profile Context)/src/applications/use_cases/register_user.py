@@ -34,11 +34,11 @@ class RegisterUserUseCase:
         logger.info(f"Registered: {user}")
 
 
-        # await self._publisher.publish(
-        #     event=UserDeleted(
-        #         user_id=str(user.id),
-        #     ),
-        #     key=str(user.id)
-        # )
+        await self._publisher.publish(
+            event=UserRegistered(
+                user_id=str(user.id),
+            ),
+            key=str(user.id)
+        )
 
         return str(user.id)

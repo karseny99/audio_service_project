@@ -10,6 +10,7 @@ from src.infrastructure.events.converters import UserEventConverters
 from src.domain.users.services import UserRegistrationService
 
 from src.applications.use_cases.register_user import RegisterUserUseCase
+from src.applications.use_cases.delete_user import DeleteUserUseCase
 from src.applications.use_cases.change_password import ChangePasswordUseCase
 from src.applications.use_cases.auth_user import AuthUserUseCase
 from src.applications.use_cases.get_user_info import GetUserInfoUseCase
@@ -45,17 +46,24 @@ class Container(containers.DeclarativeContainer):
         bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS
     )
 
-    kafka_publisher = providers.Singleton(
+    # kafka_publisher = providers.Singleton(
+    #     KafkaEventPublisher,
+    #     broker=kafka_broker,
+    #     destination=settings.KAFKA_USER_CONTEXT_TOPIC, # just to fill the argument
+    #     converters=UserEventConverters,
+    # )
+
+    kafka_publisher_delete_uc = providers.Singleton(
         KafkaEventPublisher,
         broker=kafka_broker,
-        destination=settings.KAFKA_USER_CONTEXT_TOPIC, # just to fill the argument
+        destination=[settings.KAFKA_PLAYLIST_CONTEXT_TOPIC, settings.KAFKA_LISTENING_HISTORY_CONTEXT_TOPIC],
         converters=UserEventConverters,
     )
 
     kafka_publisher_register_uc = providers.Singleton(
         KafkaEventPublisher,
         broker=kafka_broker,
-        destination=[settings.KAFKA_PLAYLIST_CONTEXT_TOPIC, settings.KAFKA_LISTENING_HISTORY_CONTEXT_TOPIC],
+        destination=[settings.KAFKA_ANALYTICS_TOPIC],
         converters=UserEventConverters,
     )
 
@@ -87,6 +95,12 @@ class Container(containers.DeclarativeContainer):
 
 
     # Use Cases
+    delete_use_case = providers.Factory(
+        DeleteUserUseCase,
+        user_repo=user_repository,
+        event_publisher=kafka_publisher_delete_uc,
+    )
+
     register_use_case = providers.Factory(
         RegisterUserUseCase,
         user_repo=user_repository,
@@ -97,7 +111,7 @@ class Container(containers.DeclarativeContainer):
     change_password_use_case = providers.Factory(
         ChangePasswordUseCase,
         user_repo=user_repository,
-        event_publisher=kafka_publisher
+        # event_publisher=kafka_publisher
     )
 
     auth_user_use_case = providers.Factory(
