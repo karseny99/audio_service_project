@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 import os
 
 class Settings(BaseSettings):
@@ -8,12 +8,12 @@ class Settings(BaseSettings):
 
     ELASTIC_HOST: str = "http://localhost:9200"
     ELASTIC_TRACK_INDEX: str = "music_tracks"
-    ELASTIC_USER: str = None
-    ELASTIC_PASSWORD: str = None
+    ELASTIC_USER: str = ''
+    ELASTIC_PASSWORD: str = ''
 
     # gRPC server
     GRPC_HOST: str = '[::]' # all interfaces
-    GRPC_PORT: str = '50053'
+    GRPC_PORT: str = '50054'
 
     # gRPC client
     # GRPC_TRACK_SERVICE_HOST: str = 'localhost'

@@ -13,7 +13,60 @@ from src.schemas.track import (
     TrackResponse
 )
 
+from src.schemas.track import (
+    TracksByArtistRequest,
+    TracksByGenreRequest,
+    TracksPaginationResponse,
+    TrackResponse,
+    TrackSearchRequest,
+    TrackSearchResponse,
+    TrackItemResponse
+)
+from src.protos.user_context.generated import track_search_pb2
+
 router = APIRouter(prefix="/tracks", tags=["Tracks"])
+
+@router.post("/search", response_model=TrackSearchResponse)
+@inject
+async def search_tracks(
+    request: TrackSearchRequest,
+    stub=Depends(Provide[Container.track_search_stub])
+):
+    # Создаем gRPC запрос, преобразуя None в пустые значения
+    grpc_request = track_search_pb2.SearchTracksRequest(
+        title=request.title or "",
+        artist_name=request.artist_name or "",
+        genre_name=request.genre_name or [],
+        min_duration_ms=request.min_duration_ms or 0,
+        max_duration_ms=request.max_duration_ms or 0,
+        explicit=request.explicit if request.explicit is not None else None,
+        release_date_from=request.release_date_from.isoformat() if request.release_date_from else "",
+        release_date_to=request.release_date_to.isoformat() if request.release_date_to else "",
+        page=request.page,
+        page_size=request.page_size
+    )
+    
+    try:
+        response = stub.Search(grpc_request)
+        return TrackSearchResponse(
+            tracks=[
+                TrackItemResponse(
+                    track_id=t.track_id,
+                    title=t.title,
+                    duration_ms=t.duration_ms,
+                    artists=list(t.artists),
+                    genres=list(t.genres),
+                    explicit=t.explicit,
+                    release_date=t.release_date
+                ) for t in response.tracks
+            ],
+            total=response.total,
+            page=response.page,
+            page_size=response.page_size
+        )
+    except Exception as e:
+        # logger.error(f"Search error: {str(e)}")
+        raise HTTPException(500, detail="Internal server error")
 
 @router.get("/artist", response_model=TracksPaginationResponse)
 @inject

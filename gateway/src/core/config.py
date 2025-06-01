@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     ENV: str = "local"  # local/stage/prod
 
+
     # Logger
     LOG_LEVEL: int = logging.DEBUG # INFO
     LOKI_URL: str = "http://loki:3100"
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     GRPC_PORT: str = '50051'
 
     MUSIC_CATALOG_GRPC_URL: str = "localhost:50053"
+    TRACK_SEARCH_GRPC_URL: str = "localhost:50054"  
     
     # Kafka
     # KAFKA_BOOTSTRAP_SERVERS: str

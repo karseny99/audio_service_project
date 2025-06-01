@@ -1,54 +1,12 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Any, Dict
-from datetime import date
+from typing import List, Any, Dict
 
 from src.domain.elastic_search.repository import SearchRepository
+from src.domain.cache.cache_repository import CacheRepository, CacheTTL
+from src.domain.cache.serialization import CacheSerializer
 from src.core.exceptions import DomainError
+from src.applications.decorators.cache import cached
 
-
-class ElasticTrackRequest(BaseModel):
-    """
-    Все поля опциональны - если пользователь ничего не передал, вернём ошибку.
-    """
-    title: Optional[str] = Field(None, description="Часть названия трека для поиска")
-    artist_name: Optional[str] = Field(None, description="Имя артиста (или фрагмент) для поиска")
-    genre_name: Optional[List[str]] = Field(
-        None,
-        description="Список жанров (если хотим искать по нескольким)"
-    )
-    min_duration_ms: Optional[int] = Field(None, description="Минимальная длительность (ms)")
-    max_duration_ms: Optional[int] = Field(None, description="Максимальная длительность (ms)")
-    explicit: Optional[bool] = Field(None, description="Флаг explicit")
-    release_date_from: Optional[date] = Field(None, description="Дата релиза от")
-    release_date_to: Optional[date] = Field(None, description="Дата релиза до")
-
-    # Пагинация:
-    page: Optional[int] = Field(1, ge=1, description="Номер страницы (>= 1)")
-    page_size: Optional[int] = Field(50, ge=1, le=100, description="Кол-во элементов на странице (максимум 100)")
-
-
-class TrackItem(BaseModel):
-    """
-    Единичный трек в ответе (поля соответствуют тому, что хранится в Elasticsearch).
-    """
-    track_id: Optional[int]
-    title: Optional[str]
-    duration_ms: Optional[int]
-    artists: Optional[List[str]]            # здесь просто имена артистов
-    genres: Optional[List[str]]             # имена жанров
-    explicit: Optional[bool]
-    release_date: Optional[date]
-
-
-class ElasticTrackResponse(BaseModel):
-    """
-    Обёртка-ответ для поиска треков.
-    """
-    tracks: List[TrackItem]
-    total: int                              # общее число найденных документов
-    page: int
-    page_size: int
-    success: bool
+from src.applications.models import ElasticTrackRequest, ElasticTrackResponse, TrackItem
 
 
 class SearchTracksUseCase:
@@ -57,9 +15,18 @@ class SearchTracksUseCase:
     Получает ElasticTrackRequest, валидирует, формирует DSL-запрос к ES, 
     вызывает SearchRepository и возвращает ElasticTrackResponse.
     """
-    def __init__(self, search_repo: SearchRepository):
+    def __init__(self, search_repo: SearchRepository, _cache_repo, _cache_serializer):
         self._search_repo = search_repo
+        self._cache_repo = _cache_repo
+        self._cache_serializer = _cache_serializer
 
+    @cached(
+        key_template="search:title={title}:artist={artist_name}:genres={genre_name}:"
+                    "min_dur={min_duration_ms}:max_dur={max_duration_ms}:"
+                    "explicit={explicit}:from={release_date_from}:to={release_date_to}:"
+                    "page={page}:size={page_size}",
+        ttl=CacheTTL.DEFAULT
+    )
     async def execute(self, request: ElasticTrackRequest) -> ElasticTrackResponse:
         # хотя бы одно поле фильтрации должно быть непустым
         has_any_filter = any([

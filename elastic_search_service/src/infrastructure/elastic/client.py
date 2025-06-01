@@ -5,16 +5,10 @@ from src.core.logger import logger
 
 class ElasticClient:
     """
-    Singleton-обёртка над AsyncElasticsearch.
-    Для подключения используем URL из настроек.
+    Обёртка над AsyncElasticsearch.
     """
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._client = None
-        return cls._instance
+    def __init__(self):
+        self._client = None  # Будет создан при подключении
 
     async def connect(self):
         if self._client is None:
@@ -23,9 +17,17 @@ class ElasticClient:
                 http_auth=(settings.ELASTIC_USER, settings.ELASTIC_PASSWORD) if settings.ELASTIC_USER else None,
                 timeout=30,
                 max_retries=3,
-                retry_on_timeout=True
+                retry_on_timeout=True,
+                verify_certs=False,
+                ssl_show_warn=False
             )
-            logger.info(f"Connected to Elasticsearch at {settings.ELASTIC_HOST}")
+            try:
+                info = await self._client.info()
+                logger.info(f"Connected to Elasticsearch at {settings.ELASTIC_HOST}")
+                logger.debug(f"Elasticsearch info: {info}")
+            except Exception as e:
+                logger.error(f"Elasticsearch connection error: {str(e)}")
+                raise
 
     async def disconnect(self):
         if self._client:
