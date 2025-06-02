@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     GRPC_PORT: str = '50051'
 
     MUSIC_CATALOG_GRPC_URL: str = "localhost:50053"
+    LISTENING_HISTORY_GRPC_URL: str = "localhost:50054"
+    STREAMING_SERVICE_GRPC_URL: str = 'localhost:50056'
     
     # Kafka
     # KAFKA_BOOTSTRAP_SERVERS: str

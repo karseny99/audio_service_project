@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, status
 from fastapi.websockets import WebSocketState
 import grpc
 from pydantic import BaseModel
+
+from src.core.config import settings
 import src.protos.streaming_context.generated.streaming_pb2 as pb2 
 import src.protos.streaming_context.generated.streaming_pb2_grpc as pb2_grpc 
 
@@ -22,7 +24,7 @@ session_state = SessionState()
 # gRPC клиентclass GRPCAudioClient:
 class GRPCAudioClient:
     def __init__(self):
-        self.channel = grpc.aio.insecure_channel('localhost:50056')
+        self.channel = grpc.aio.insecure_channel(settings.STREAMING_SERVICE_GRPC_URL)
         self.stub = pb2_grpc.StreamingServiceStub(self.channel)
         self.stream = None
         self._receive_task = None
@@ -260,14 +262,11 @@ async def start_stream(request: StartStreamRequest):
             "client": grpc_client  # Сохраняем клиент в сессии
         }
         
-        # Очередь создается автоматически в _start_background_receiver
-        # Фоновая задача уже запущена внутри start_stream
         
         return session_data
         
     except Exception as e:
-        raise
-        # raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
     
 
 # HTTP endpoint для управления сессией
