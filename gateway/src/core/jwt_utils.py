@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 class JWTSettings(BaseSettings):
     SECRET_KEY: str = "supersecrett"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 240
 
 jwt_settings = JWTSettings()
 

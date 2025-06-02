@@ -1,7 +1,6 @@
 from src.core.protos.generated import UserEvents_pb2
 from src.core.protos.generated import TrackEvents_pb2
 from src.domain.events.events import UserDeleted, TrackListened
-from src.domain.playlists.value_objects import UserId
 
 class UserEventConverter:
     @staticmethod

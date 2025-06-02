@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP as PostgresTIMESTAMP
 
 from src.domain.user_likes.models import UserLike as DomainUserLike
 from src.domain.user_likes.models import UserHistory as DomainUserHistory
+from src.domain.user_likes.models import TrackInfo
 from src.domain.user_likes.value_objects import TrackId, UserId
 
 class Base(DeclarativeBase):
@@ -51,10 +52,9 @@ class UserHistoryORM(Base):
         nullable=True
     )
     
-    def to_domain(self) -> 'DomainUserHistory':
-        """Convert ORM model to domain UserHistory"""
-        return DomainUserHistory(
-            user_id=self.user_id,
-            track_id=self.track_id,
-            timestamp=self.timestamp
+    def to_track_info(self) -> TrackInfo:
+        """Convert ORM record to TrackInfo domain object"""
+        return TrackInfo(
+            timestamp=self.timestamp,
+            track_id=TrackId(self.track_id)
         )

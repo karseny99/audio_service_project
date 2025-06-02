@@ -28,6 +28,7 @@ class AuthUserUseCase:
             logger.debug(f"{username} doesn't exists")
             raise UserNotFoundError(f"User {username} does not exists")
 
+        logger.debug(f"{user.password_hash.value}")
         if password != user.password_hash.value:
             logger.debug(f"Invalid password")
             raise InvalidPasswordError(f"Invalid credentials")

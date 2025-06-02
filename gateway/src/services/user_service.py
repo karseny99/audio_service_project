@@ -6,6 +6,8 @@ from src.protos.user_context.generated import commands_pb2, commands_pb2_grpc
 from src.protos.listening_history_context.generated import LikeCommands_pb2, LikeCommands_pb2_grpc
 from src.core.password_utils import hash_password
 
+from src.core.logger import logger
+
 from google.protobuf import timestamp_pb2
 
 def register_user(username: str, email: str, password: str) -> str:
@@ -35,8 +37,10 @@ def register_user(username: str, email: str, password: str) -> str:
         password=hashed_password
     )
     
+
     try:
         # 4. Выполняем вызов
+        logger.debug(f"{email}")
         response = stub.RegisterUser(request, timeout=10.0)
         return str(response.user_id)
         
@@ -196,44 +200,22 @@ def get_user_history(user_id: str, limit: int, offset: int) -> dict:
             raise RuntimeError(f"Ошибка gRPC: {code.name}")
 
 
-def get_user_history(user_id: str, limit: int, offset: int) -> dict:
-
-    stub = get_listening_stub()
-    request = LikeCommands_pb2.GetUserHistoryRequest(
-        user_id=user_id,
-        limit=limit,
-        offset=offset,
-    )
-    try:
-        response = stub.GetUserHistory(request, timeout=5.0)
-        return {'tracks' : [track_id for track_id in response.tracks]}
-            
-    except RpcError as e:
-        code = e.code()
-        if code == StatusCode.INVALID_ARGUMENT:
-            raise ValueError(f"Ошибка валидации: {e.details()}")
-        elif code == StatusCode.NOT_FOUND:
-            raise ValueError("Пользователь не найден")
-        elif code == StatusCode.UNAVAILABLE:
-            raise RuntimeError("Сервис недоступен")
-        else:
-            raise RuntimeError(f"Ошибка gRPC: {code.name}")
 
 def like_track(user_id: int, track_id: int) -> None:
     stub = get_listening_stub()
-    request = LikeCommands_pb2.LikeTrack(
-        user_id=user_id,
-        track_id=track_id,
+    request = LikeCommands_pb2.LikeTrackRequest(
+        user_id=int(user_id),
+        track_id=int(track_id),
     )
     try:
-        stub.ChangePassword(request, timeout=5.0)
+        stub.LikeTrack(request, timeout=5.0)
     except RpcError as e:
         code = e.code()
         if code == StatusCode.INVALID_ARGUMENT:
             raise ValueError(f"Ошибка валидации: {e.details()}")
         elif code == StatusCode.NOT_FOUND:
-            raise ValueError("Пользователь не найден")
+            raise ValueError("Трек не найден")
         elif code == StatusCode.UNAVAILABLE:
-            raise RuntimeError("Сервис пользователей недоступен")
+            raise RuntimeError("Сервис недоступен")
         else:
             raise RuntimeError(f"Ошибка gRPC: {code.name}")

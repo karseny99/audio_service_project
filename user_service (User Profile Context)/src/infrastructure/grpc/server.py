@@ -4,6 +4,7 @@ from dependency_injector.wiring import inject, Provide
 import grpc
 import asyncio
 
+from src.domain.users.models import User
 from src.core.di import Container
 from src.core.protos.generated import commands_pb2, commands_pb2_grpc
 from src.core.di import Container
@@ -36,7 +37,7 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
         self._get_user_info_uc = get_user_info_uc
         self._delete_uc = get_delete_uc
 
-    async def RegisterUser(self, request, context):
+    async def DeleteUser(self, request, context):
         try:
             isDeleted = await self._delete_uc.execute(
                 user_id=request.user_id
@@ -54,6 +55,7 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
 
     async def RegisterUser(self, request, context):
         try:
+            logger.debug(request)
             user_id = await self._register_uc.execute(
                 email=request.email,
                 password=request.password,
@@ -88,6 +90,7 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
 
     async def ChangePassword(self, request, context):
         try:
+            logger.debug(f"Change password for {request.user_id}")
             await self._change_uc.execute(
                 user_id=int(request.user_id),
                 old_password=request.old_password,
@@ -105,17 +108,17 @@ class UserCommandService(commands_pb2_grpc.UserCommandServiceServicer):
 
     async def GetUserInfo(self, request, context):
         try:
-            user = await self._get_user_info_uc.execute(user_id=int(request.user_id))
+            user: User = await self._get_user_info_uc.execute(user_id=int(request.user_id))
 
             created_at = timestamp_pb2.Timestamp()
             created_at.FromDatetime(user.created_at)
             
-            print(f"User: {type(user.id)}, {type(user.username)}, {type(user.email)}, {type(created_at)}")
+            logger.debug(f"User: {type(user.id)}, {type(user.username)}, {type(user.email)}, {type(created_at)}")
 
             return commands_pb2.GetUserInfoResponse(            
                 user_id = str(user.id),
-                username = str(user.username),
-                email = str(user.email),
+                username = str(user.username.value),
+                email = str(user.email.value),
                 created_at = created_at
             )
         

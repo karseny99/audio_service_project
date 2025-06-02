@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date
-from typing import List
+from typing import List, Optional
 
 from src.domain.music_catalog.value_objects import (
     TrackId, 
@@ -26,7 +26,7 @@ class Track:
     track_id: TrackId
     title: str
     duration: DurationMs
-    available_bitrates: List[Bitrate]
+    available_bitrates: Optional[List[Bitrate]] = None
     artists: List[ArtistInfo] = field(default_factory=list)
     genres: List[Genre] = field(default_factory=list)
     explicit: bool = False

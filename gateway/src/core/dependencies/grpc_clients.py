@@ -19,7 +19,7 @@ def get_track_search_stub():
 @lru_cache(maxsize=None)  # Кешируем канал на всё время работы приложения
 def get_user_channel() -> grpc.Channel:
     return grpc.insecure_channel(
-        settings.get_grpc_url(),  
+        settings.USER_PROFILE_GRPC_URL,  
         options=[
             ('grpc.keepalive_time_ms', 10000),
             ('grpc.enable_retries', 1),

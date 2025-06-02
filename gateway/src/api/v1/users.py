@@ -3,7 +3,7 @@ from dependency_injector.wiring import inject, Provide
 from pydantic import BaseModel
 from src.services.user_service import change_password, get_user_info, get_user_likes, like_track
 from src.schemas.user import ChangePasswordRequest, ChangePasswordResponse, GetUserInfoResponse, GetUserLikesResponse, GetUserLikesResponse, GetUserHistoryResponse, GetUserHistoryResponse, LikeTrackRequest
-
+from src.core.logger import logger
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -19,6 +19,7 @@ async def change_password_endpoint(
 ):
     user_id: str = request.state.user_id
     try:
+        logger.debug(f"change password: {request}")
         change_password(
             user_id=user_id,
             old_password=payload.old_password,
@@ -44,14 +45,14 @@ async def change_password_endpoint(
         )
 
 
-@router.get(  # в этом блоке не очень уверен 
+@router.get(  
     "/get-user-info",
     summary="Get user info",
     status_code=status.HTTP_200_OK
 )
 @inject
 async def get_user_info_endpoint(
-        request: Request,  # от AuthMiddleware в state.user_id
+    request: Request,  
 ):
     user_id: str = request.state.user_id
     # user_id = int(request.state.user_id)
@@ -82,90 +83,3 @@ async def get_user_info_endpoint(
             detail=str(e)
         )
 
-@router.get(
-    "/users/{user_id}/likes",
-    response_model=GetUserLikesResponse,
-    summary="Получить лайки пользователя",
-    description="Возвращает список треков, которые лайкнул пользователь",
-    tags=["Likes"]
-)
-async def get_user_likes(
-    request: Request,
-    limit: int = 10,
-    offset: int = 0
-):
-    try:
-        user_id = request.state.user_id
-        result = get_user_likes(user_id=user_id, limit=limit, offset=offset)
-        return GetUserLikesResponse(tracks=result['tracks'])
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
-@router.get(
-    "/users/{user_id}/history",
-    response_model=GetUserHistoryResponse,
-    summary="Получить историю прослушиваний пользователя",
-    description="Возвращает историю прослушиваний треков пользователя",
-    tags=["History"]
-)
-async def get_user_history(
-    request: Request,
-    limit: int = 10,
-    offset: int = 0
-):
-    try:
-        user_id = request.state.user_id
-        grpc_response = get_user_history(user_id=user_id, limit=limit, offset=offset)
-        
-        return GetUserHistoryResponse(
-            tracks=[
-                track_id
-                for track_id in grpc_response.get("tracks", [])
-            ]
-        )
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
-@router.post(
-    "/tracks/{track_id}/like",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Поставить лайк треку",
-    description="Добавляет трек в понравившиеся для указанного пользователя",
-    tags=["Likes"]
-)
-async def like_track_endpoint(
-    request: Request,
-    track_id: int,
-):
-    try:
-        like_track(
-            user_id=request.state.user_id,
-            track_id=track_id
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except RuntimeError as e:
-        if "недоступен" in str(e):
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=str(e)
-            )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )

@@ -20,16 +20,11 @@ message GetUserLikesRequest {
 }
 
 message GetUserLikesResponse {
-  repeated track_id tracks = 1;
-}
-
-message TrackHistoryItem {
-  int64 track_id = 1;
-  string timestamp = 2;  
+  repeated int64 tracks = 1;
 }
 
 message GetUserHistoryResponse {
-  repeated TrackHistoryItem tracks = 1;
+  repeated int64 tracks = 1;
 }
 
 service LikeCommandService {
