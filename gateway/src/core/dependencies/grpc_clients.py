@@ -2,8 +2,19 @@ import grpc
 from functools import lru_cache
 
 from src.core.config import settings
-from src.protos.user_context.generated import commands_pb2_grpc, track_pb2_grpc
 from src.protos.listening_history_context.generated import LikeCommands_pb2, LikeCommands_pb2_grpc
+from src.protos.user_context.generated import commands_pb2_grpc, track_pb2_grpc, track_search_pb2_grpc
+
+@lru_cache(maxsize=None)
+def get_track_search_channel() -> grpc.Channel:
+    return grpc.insecure_channel(
+        settings.TRACK_SEARCH_GRPC_URL,
+        options=[('grpc.keepalive_time_ms', 10000)]
+    )
+
+def get_track_search_stub():
+    channel = get_track_search_channel()
+    return track_search_pb2_grpc.TrackSearchServiceStub(channel)
 
 @lru_cache(maxsize=None)  # Кешируем канал на всё время работы приложения
 def get_user_channel() -> grpc.Channel:
