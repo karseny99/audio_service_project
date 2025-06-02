@@ -123,6 +123,18 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
+
+  db-restore:
+    image: postgres:17-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: "1"
+    volumes:
+      - ./music_service.dump:/music_service.dump:ro
+    command: >
+      sh -c 'pg_restore -h postgres -U user -d audio_db --clean --if-exists /music_service.dump'
     
   minio:
     image: minio/minio
@@ -150,8 +162,6 @@ services:
       "
     networks:
       - minio_net
-
-
 
 volumes:
   zookeeper_data:
