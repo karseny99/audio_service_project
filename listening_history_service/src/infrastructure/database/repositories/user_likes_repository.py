@@ -8,7 +8,7 @@ from src.core.logger import logger
 from src.infrastructure.database.repositories.database import ConnectionDecorator
 from src.domain.user_likes.repository import UserLikesRepository
 from src.domain.user_likes.models import UserLike
-from src.infrastructure.database.models import UserLikeORM
+from src.infrastructure.database.models import UserLikeORM, UserHistoryORM
 from src.domain.user_likes.value_objects import UserId, TrackId
 
 
@@ -66,4 +66,33 @@ class PostgresUserLikesRepository(UserLikesRepository):
         result = await session.execute(stmt)
         return result.scalar_one_or_none() is not None
 
-    
+    @ConnectionDecorator(isolation_level="READ COMMITTED")
+    async def get_history(self, user_id: UserId, count: int, offset: int, session: Optional[AsyncSession] = None) -> List[UserLike]:
+        stmt = (
+            select(UserLikeORM)
+            .where(UserLikeORM.user_id == user_id)
+            .order_by(UserLikeORM.liked_at.desc())
+            .limit(count)
+            .offset(offset)
+        )
+        
+        result = await session.execute(stmt)
+        return [like.to_domain() for like in result.scalars()]
+
+    @ConnectionDecorator(isolation_level="READ COMMITTED")
+    async def add_to_history(self, user_id: UserId, track_id: TrackId, session: Optional[AsyncSession] = None) -> bool:
+        stmt = select(UserHistoryORM).where(
+            (UserHistoryORM.user_id == user_id) &
+            (UserHistoryORM.track_id == track_id)
+        ).limit(1)
+        
+        existing = await session.execute(stmt)
+        if existing.scalar_one_or_none() is not None:
+            return False
+        
+        new_history_item = UserHistoryORM(
+            user_id=user_id,
+            track_id=track_id
+        )
+        session.add(new_history_item)
+        return True

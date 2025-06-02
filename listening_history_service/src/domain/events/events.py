@@ -17,3 +17,9 @@ class PlaylistEvent:
 @dataclass
 class UserDeleted:
     user_id: int
+
+
+@dataclass 
+class TrackListened:
+    current_chunk: int
+    total_chunks: int

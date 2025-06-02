@@ -39,6 +39,31 @@ class LikeCommandService(LikeCommands_pb2_grpc.LikeCommandServiceServicer):
         except Exception as e:
             await context.abort(grpc.StatusCode.INTERNAL, str(e))
 
+    async def GetUserHistory(self, request, context: ServicerContext):
+        try:
+            # Получаем историю из use case
+            history_items = await self._get_history_use_case.execute(
+                user_id=request.user_id,
+                limit=request.limit,
+                offset=request.offset
+            )
+
+            # Конвертируем в protobuf response
+            return LikeCommands_pb2.UserHistoryResponse(
+                tracks=[
+                    LikeCommands_pb2.TrackHistoryItem(
+                        track_id=item.track_id,
+                        timestamp=item.timestamp.isoformat()  # или item.timestamp.ToJsonString() если используете protobuf Timestamp
+                    )
+                    for item in history_items
+                ],
+            )
+
+        except ValueObjectException as e:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            await context.abort(grpc.StatusCode.INTERNAL, str(e))
+
 
 async def serve_grpc():
 
