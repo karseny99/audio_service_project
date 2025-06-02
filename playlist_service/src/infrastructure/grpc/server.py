@@ -42,6 +42,23 @@ class PlaylistCommandService(PlaylistCommands_pb2_grpc.PlaylistCommandServiceSer
         except Exception as e:
             await context.abort(grpc.StatusCode.INTERNAL, str(e))
 
+    async def AddPlaylist(self, request, context: ServicerContext):
+        try:
+            await self._subscribe_to_playlist_uc.execute(
+                playlist_id=int(request.playlist_id),
+                user_id=request.user_id
+            )
+            return empty_pb2.Empty()
+        except InsufficientPermission as e:
+            await context.abort(grpc.StatusCode.PERMISSION_DENIED, str(e))
+        except ValueObjectException as e:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+        except TrackNotFoundError as e:
+            await context.abort(grpc.StatusCode.NOT_FOUND, str(e))
+        except Exception as e:
+            await context.abort(grpc.StatusCode.INTERNAL, str(e))
+    
+
 
 async def serve_grpc():
    
