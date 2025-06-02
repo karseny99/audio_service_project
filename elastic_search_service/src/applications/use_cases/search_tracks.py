@@ -49,11 +49,18 @@ class SearchTracksUseCase:
             })
         if request.artist_name:
             must_clauses.append({
-                "match": {"artists.name": {"query": request.artist_name, "fuzziness": "AUTO"}}
+                "match": {
+                    "artists": {
+                        "query": request.artist_name,
+                        "fuzziness": "AUTO"
+                    }
+                }
             })
         if request.genre_name:
             must_clauses.append({
-                "terms": {"genres.name": request.genre_name}
+                "terms": {
+                    "genres": request.genre_name
+                }
             })
         if request.min_duration_ms is not None or request.max_duration_ms is not None:
             range_body: Dict[str, Any] = {}

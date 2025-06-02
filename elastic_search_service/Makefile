@@ -21,5 +21,8 @@ install:
 run:
 	poetry run python3 main.py
 
+sync-data:
+	poetry run python3 -m src.scripts.sync_tracks_to_elastic
+
 clean:
 	rm -rf src/core/protos/generated/*

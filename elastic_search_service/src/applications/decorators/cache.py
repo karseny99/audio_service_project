@@ -38,7 +38,7 @@ def cached(
                 try:
                     # Создаем хеш запроса для уникального ключа
                     request_hash = hashlib.md5(
-                        json.dumps(request.dict(sort_keys=True)).encode()
+                        json.dumps(request.dict(), sort_keys=True).encode()
                     ).hexdigest()
                     cache_key = f"{func.__name__}_{request_hash}"
                 except Exception as e:

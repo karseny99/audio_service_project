@@ -40,18 +40,24 @@ class ElasticSearchRepository(SearchRepository):
             raise
 
 
-    # # Дополнительно (опционально): если нужна массовая загрузка/обновление:
-    # async def bulk_index(self, actions: List[Dict[str, Any]]) -> None:
-    #     """
-    #     Примерная реализация массовой индексации через helpers.async_bulk.
-    #     `actions` — список dict с полями: {'_index': ..., '_id': ..., '_source': {...}}.
-    #     """
-    #     try:
-    #         await async_bulk(
-    #             client=self._client,
-    #             actions=actions,
-    #             index=self._index
-    #         )
-    #     except Exception as e:
-    #         logger.error(f"Elasticsearch bulk index error: {e}")
-    #         raise
+    async def bulk_index(self, actions: List[Dict[str, Any]]) -> None:
+        """
+        Массовая индексация документов
+        """
+        try:
+            success, failed = await async_bulk(
+                client=self._es,
+                actions=actions,
+                stats_only=False,
+                raise_on_error=False
+            )
+            
+            if failed:
+                for failure in failed:
+                    logger.error(f"Document index failed: {failure}")
+                logger.error(f"Bulk index errors: {len(failed)} documents failed")
+            
+            logger.info(f"Successfully indexed: {success} documents")
+        except Exception as e:
+            logger.error(f"Bulk index error: {str(e)}")
+            raise
