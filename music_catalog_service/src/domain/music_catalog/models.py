@@ -26,10 +26,10 @@ class Track:
     track_id: TrackId
     title: str
     duration: DurationMs
+    available_bitrates: List[Bitrate]
     artists: List[ArtistInfo] = field(default_factory=list)
     genres: List[Genre] = field(default_factory=list)
     explicit: bool = False
-    available_bitrates: List[Bitrate] = field(default_factor=list)
     release_date: date = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 

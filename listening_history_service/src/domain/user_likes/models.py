@@ -11,4 +11,8 @@ class UserLike:
     track_id: TrackId
     liked_at: datetime
 
-    
+@dataclass(frozen=True)
+class UserHistory:
+    user_id: UserId
+    history: list[TrackId]
+    timestamp: datetime

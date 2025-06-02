@@ -303,8 +303,7 @@ async def control_stream(session_id: str, request: ControlStreamRequest):
             "status": session_info["status"]
         }
     except Exception as e:
-        raise
-        # raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
     
 
 # HTTP endpoint для получения информации о сессии

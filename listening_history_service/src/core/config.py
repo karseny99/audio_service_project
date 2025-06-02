@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     KAFKA_BOOTSTRAP_SERVERS: str = 'localhost:29092'
     # KAFKA_BOOTSTRAP_SERVERS: str = 'kafka:9092' # in docker network
     KAFKA_PLAYLIST_CONTEXT_TOPIC: str = 'playlist-topic'
+    KAFKA_USER_TOPIC: str = 'user-topic'
+    KAFKA_STREAMING_TOPIC: str = 'streaming-topic'
     # KAFKA_SECURITY_PROTOCOL: Optional[str] = None
     # KAFKA_SASL_MECHANISM: Optional[str] = None
     # KAFKA_SASL_USERNAME: Optional[str] = None
