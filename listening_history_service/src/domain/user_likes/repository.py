@@ -29,7 +29,7 @@ class UserLikesRepository(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def get_history(self, user_id: int, count: int, offset: int) -> bool:
+    async def get_history(self, user_id: int, count: int, offset: int) -> list:
         raise NotImplementedError
     
     @abstractmethod

@@ -6,7 +6,7 @@ import asyncio
 from src.core.config import settings
 from src.core.logger import logger
 
-from src.domain.events.events import PlaylistEvent
+from src.domain.events.events import HistoryEvent
 
 class KafkaEventPublisher:
     def __init__(self, broker: KafkaBroker):
@@ -47,18 +47,19 @@ class KafkaEventPublisher:
         finally:
             pass  # Не закрываем соединение явно, чтобы переиспользовать
 
-    async def publish(self, event: PlaylistEvent, topic: str, key: str | None = None):
+    async def publish(self, event: HistoryEvent, topic: str, key: str | None = None):
         """Публикация сообщения с гарантированным подключением"""
         try:
             async with self.get_producer() as producer:               
-                headers = event.get_headers()
-                message = event.to_proto().SerializeToString()
-                await producer.publish(
-                    message=message,
-                    topic=topic,
-                    headers=headers,
-                    key=key.encode() if key else None,
-                )
+                pass
+                # headers = event.get_headers()
+                # message = event.to_proto().SerializeToString()
+                # await producer.publish(
+                #     message=message,
+                #     topic=topic,
+                #     headers=headers,
+                #     key=key.encode() if key else None,
+                # )
                 logger.debug(f"Successfully published to {topic}")
         except Exception as e:
             logger.error(f"Publication failed: {str(e)}")

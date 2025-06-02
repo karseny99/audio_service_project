@@ -2,6 +2,8 @@ from dependency_injector import containers, providers
 from faststream.kafka import KafkaBroker
 
 from src.applications.use_cases.like_track import LikeTrackUseCase
+from src.applications.use_cases.get_user_likes import GetUserLikesUseCase
+from src.applications.use_cases.get_history_use_case import GetHistoryUseCase
 from src.applications.use_cases.delete_user import HandleUserDeletedUseCase
 from src.applications.use_cases.add_track_to_history import HandleTrackListenedUseCase
 
@@ -50,6 +52,16 @@ class Container(containers.DeclarativeContainer):
         LikeTrackUseCase,
         likes_repo=user_likes_repository,
         track_service=track_service_client,
+    )
+
+    get_user_likes_use_case = providers.Factory(
+        GetUserLikesUseCase,
+        likes_repo=user_likes_repository,
+    )
+
+    get_history_use_case = providers.Factory(
+        GetHistoryUseCase,
+        likes_repo=user_likes_repository,
     )
 
     handle_user_deleted_use_case = providers.Factory(

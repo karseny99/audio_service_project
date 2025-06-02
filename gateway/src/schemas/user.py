@@ -1,6 +1,7 @@
 # gateway/src/schemas/user.py
 
-from pydantic import BaseModel, EmailStr, constr, Field, List
+from pydantic import BaseModel, EmailStr, constr, Field
+from typing import List
 from datetime import datetime
 
 class RegisterUserRequest(BaseModel):
@@ -55,3 +56,4 @@ class GetUserHistoryResponse(BaseModel):
 
 class LikeTrackRequest(BaseModel):
     track_id: int = Field(..., gt=0, description="ID трека")
+

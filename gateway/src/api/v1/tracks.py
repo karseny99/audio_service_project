@@ -1,8 +1,10 @@
 from src.protos.user_context.generated.track_pb2 import (
     GetTracksByArtistRequest,
     GetTracksByGenreRequest,
-    Pagination
+    Pagination,
+    GetTrackRequest
 )
+from grpc import RpcError, StatusCode
 from fastapi import APIRouter, Depends, HTTPException
 from dependency_injector.wiring import inject, Provide
 from src.core.container import Container
@@ -20,9 +22,13 @@ from src.schemas.track import (
     TrackResponse,
     TrackSearchRequest,
     TrackSearchResponse,
-    TrackItemResponse
+    TrackItemResponse,
+    ArtistResponse,
+    GenreResponse
 )
 from src.protos.user_context.generated import track_search_pb2
+
+from src.services.music_catalog_service import get_track_by_id
 
 router = APIRouter(prefix="/tracks", tags=["Tracks"])
 
@@ -84,13 +90,7 @@ async def get_tracks_by_artist_endpoint(
         )
         
         response = stub.GetTracksByArtist(grpc_request)
-        
-        return TracksPaginationResponse(
-            tracks=[TrackResponse(**track.__dict__) for track in response.tracks],
-            total=response.pagination.total,
-            offset=request.offset,
-            limit=request.limit
-        )
+        return TracksPaginationResponse.from_proto(response)
     
     except Exception as e:
         raise HTTPException(500, detail=str(e))
@@ -109,15 +109,46 @@ async def get_tracks_by_genre_endpoint(
                 limit=request.limit
             )
         )
-        
         response = stub.GetTracksByGenre(grpc_request)
-        
-        return TracksPaginationResponse(
-            tracks=[TrackResponse(**track.__dict__) for track in response.tracks],
-            total=response.pagination.total,
-            offset=request.offset,
-            limit=request.limit
-        )
-    
+        return TracksPaginationResponse.from_proto(response)
     except Exception as e:
         raise HTTPException(500, detail=str(e))
+    
+
+@router.get("/{track_id}", response_model=TrackResponse)
+@inject
+async def get_track_by_id_endpoint(
+    track_id: int,
+):
+    try:
+        response = get_track_by_id(track_id=track_id)
+        return TrackResponse(
+            track_id=response.track_id,
+            title=response.title,
+            artists=[ArtistResponse(
+                artist_id=a.artist_id,
+                name=a.name,
+                is_verified=a.is_verified
+            ) for a in response.artists],
+            genres=[GenreResponse(
+                genre_id=g.genre_id,
+                name=g.name
+            ) for g in response.genres],
+            duration_ms=response.duration_ms,
+            explicit=response.explicit,
+            release_date=response.release_date,
+            created_at=response.created_at.ToDatetime()
+        )
+
+    except RpcError as e:
+        if e.code() == StatusCode.NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Track not found")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Service error: {e.details()}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Internal server error: {str(e)}"
+        )

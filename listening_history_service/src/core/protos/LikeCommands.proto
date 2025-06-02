@@ -1,6 +1,6 @@
 syntax = "proto3";
-import "google/protobuf/empty.proto";
 
+import "google/protobuf/empty.proto";
 
 message LikeTrackRequest {
   int64 track_id = 1;
@@ -9,22 +9,27 @@ message LikeTrackRequest {
 
 message GetUserHistoryRequest {
   int64 user_id = 1;
-  int32 limit = 2;      // Количество записей на странице
-  int32 offset = 3;     // Смещение для пагинации
+  int32 limit = 2;      
+  int32 offset = 3;     
 }
 
-message TrackHistoryItem {
-  int64 track_id = 1;
-  string timestamp = 2;  // Можно использовать google.protobuf.Timestamp, если нужна более строгая типизация
+message GetUserLikesRequest {
+  int64 user_id = 1;
+  int32 limit = 2;      
+  int32 offset = 3;     
 }
 
-message UserHistoryResponse {
-  repeated TrackHistoryItem tracks = 1;
+message GetUserLikesResponse {
+  repeated int64 tracks = 1;
 }
 
+message GetUserHistoryResponse {
+  repeated int64 tracks = 1;
+}
 
 service LikeCommandService {
-  rpc GetUserHistory (GetUserHistoryRequest) returns (UserHistoryResponse);
+  rpc GetUserHistory (GetUserHistoryRequest) returns (GetUserHistoryResponse);
+  rpc GetUserLikes (GetUserLikesRequest) returns (GetUserLikesResponse);
   rpc LikeTrack (LikeTrackRequest) returns (google.protobuf.Empty);
 }
 

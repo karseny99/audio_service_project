@@ -3,9 +3,9 @@ from typing import Optional, List
 from src.domain.music_catalog.models import Track, ArtistInfo, Genre
 
 class MusicRepository(ABC):
-    # @abstractmethod
-    # async def get_by_id(self, track_id: int) -> Optional[Track]:
-    #     raise NotImplementedError
+    @abstractmethod
+    async def get_by_id(self, track_id: int) -> Optional[Track]:
+        raise NotImplementedError
     
     @abstractmethod
     async def get_by_artist(

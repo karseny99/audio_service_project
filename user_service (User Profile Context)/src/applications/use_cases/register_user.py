@@ -31,7 +31,7 @@ class RegisterUserUseCase:
         )
         
         user = await self._repo.add(user=user)
-        logger.info(f"Registered: {user}")
+        logger.debug(f"Registered: {user}")
 
 
         await self._publisher.publish(
