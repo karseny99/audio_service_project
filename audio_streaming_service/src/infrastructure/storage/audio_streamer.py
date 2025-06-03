@@ -270,6 +270,14 @@ class S3AudioStreamer(AudioStreamer):
             chunk_number += 1
             remaining_bytes = self.object_size - self.current_offset
 
+        # last artificial chunk
+        yield AudioChunk(
+            data=b"",
+            number=chunk_number,
+            is_last=False,
+            bitrate=self.current_bitrate
+        )
+
     @property
     def bitrate(self) -> str:
         """Возвращает текущий битрейт"""

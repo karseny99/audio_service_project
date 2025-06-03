@@ -26,7 +26,6 @@ topics=(
   "listening-history-topic:3:1"
   "music-topic:3:1"
   "application-logs:3:1"
-  "etl-topc:3:1"
 )
 
 for topic in "${topics[@]}"; do

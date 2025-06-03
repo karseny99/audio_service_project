@@ -93,10 +93,14 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
                             if session.status == StreamStatus.PAUSED:
                                 await self._wait_for_resume(session, context)
                             break
-                             
+                                
                         # Отправляем чанк и обновляем состояние
-                        logger.debug(f"Chunks sent: {chunk.number}/{session.track.total_chunks - 1}")
+                        logger.debug(f"Chunks sent: {chunk.number}/{session.track.total_chunks - 1}, {chunk.number}")
                         yield self._create_chunk_message(chunk)
+
+                        if session.should_stop():
+                            session.stop()
+                            break
 
                         session.current_chunk = chunk.number + 1
                         
@@ -104,7 +108,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
                             await self._update_session_use_case.execute(session)
 
                         if chunk.is_last:
-                            session.stop()
+                            session.prestop()
 
                 except _StreamRestartException:
                     yield self._create_session_info_message(session)
@@ -116,14 +120,13 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
         except AccessFail as e:
             logger.error(f"No such file {str(e)}")
             await context.abort(StatusCode.NOT_FOUND, str(e))
-        except (Exception, StreamInitError) as e:
-            # await self._handle_error(context, e)
+        except Exception as e:
             await context.abort(StatusCode.INTERNAL, str(e))
         finally:
             if session:
-                await self._acknowledge_chunks_use_case.execute(session.track.total_chunks % 10, session)
                 await self._stop_session_use_case.execute(session)
                 yield self._create_session_info_message(session)
+                session.cleanup()
 
     async def _is_connection_aborted(self, context) -> bool:
         return False
@@ -210,7 +213,6 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             async for request in request_iterator:
                 logger.info(f"Received message: {request}")
                 await message_queue.put(request)
-                
         except Exception as e:
             logger.error(f"Error reading client messages: {str(e)}")
         finally:

@@ -68,8 +68,8 @@ class GRPCAudioClient:
                 
                 if response.HasField('chunk'):
                     await session_state.chunk_queues[session_id].put(response.chunk)
-                    if response.chunk.is_last:
-                        break
+                    # if response.chunk.is_last:
+                    #     break
                 
                 elif response.HasField('session'):
                     parsed = self._parse_session_info(response.session)
@@ -217,25 +217,20 @@ async def websocket_chunks(websocket: WebSocket, session_id: str):
             await websocket.send_text(str(chunk.number))
 
             ack_counter += 1
-            last_chunk_number = chunk.number
             
             # Отправляем подтверждение 
-            logger.debug(chunk.is_last)
             if ack_counter >= 10 or chunk.is_last:
                 await session_state.active_sessions[session_id]["client"].send_ack(ack_counter)
                 ack_counter = 0
+ 
+                if chunk.is_last:
+                    break
                 
     except WebSocketDisconnect:
         pass
     except Exception as e:
         print(f"WebSocket error: {e}")
     finally:
-        # Отправляем оставшиеся подтверждения
-        print("lasts: ", ack_counter)
-        if ack_counter > 0 and session_id in session_state.active_sessions:
-            print("lasts: ", ack_counter)
-            await session_state.active_sessions[session_id]["client"].send_ack(ack_counter)
-            ack_counter = 0
         
         if session_id in session_state.websockets:
             del session_state.websockets[session_id]
