@@ -60,6 +60,7 @@ class KafkaEventPublisher(EventPublisher):
                 headers = self._converters.get_headers(event)
                 message = proto_event.SerializeToString()
 
+                logger.debug(f"Publishing to {self._destination} event {event}")
                 for topic in self._destination:
                     await producer.publish(
                         message=message,

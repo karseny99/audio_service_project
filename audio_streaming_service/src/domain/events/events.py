@@ -47,3 +47,11 @@ class SessionStopped(SessionEvent):
     session_id: str
     total_chunks_sent: int
     timestamp: datetime
+
+
+@dataclass
+class SessionHistory(SessionEvent):
+    user_id: int
+    total_chunks_sent: int
+    total_chunks: int
+    timestamp: datetime

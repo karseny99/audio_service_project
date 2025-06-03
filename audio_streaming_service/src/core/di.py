@@ -46,6 +46,13 @@ class Container(containers.DeclarativeContainer):
         converters=SessionEventConverters,
     )
 
+    history_kafka_publisher = providers.Singleton(
+        KafkaEventPublisher,
+        broker=kafka_broker,
+        destination=[settings.KAFKA_PLAYLIST_CONTEXT_TOPIC],
+        converters=SessionEventConverters,
+    )
+
     # redis
     redis_client = providers.Singleton(
         RedisClient
@@ -113,6 +120,7 @@ class Container(containers.DeclarativeContainer):
         StopSessionUseCase,
         session_repo=session_repo, 
         event_publisher=kafka_publisher,
+        history_event_publisher=history_kafka_publisher,
     )
 
     get_change_session_bitrate_use_case = providers.Factory(

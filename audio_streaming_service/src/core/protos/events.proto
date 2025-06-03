@@ -44,3 +44,10 @@ message SessionStopped {
   int32 total_chunks_sent = 2;
   google.protobuf.Timestamp timestamp = 3;
 }
+
+message SessionHistory {
+  int64 user_id = 1;
+  int64 total_chunks_sent = 2;
+  int64 total_chunks = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}

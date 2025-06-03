@@ -14,7 +14,7 @@ class StreamingRepository(ABC):
     """Абстрактный репозиторий для управления стриминговыми сессиями"""
     
     @abstractmethod
-    async def get(self, session_id: UUID) -> Optional[StreamSession]:
+    async def get(self, session_id: str) -> Optional[StreamSession]:
         """Получить сессию по ID"""
         raise NotImplementedError
 
@@ -24,7 +24,7 @@ class StreamingRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, session_id: UUID) -> bool:
+    async def delete(self, session_id: str) -> bool:
         """Удалить сессию (возвращает True если сессия существовала)"""
         raise NotImplementedError
 

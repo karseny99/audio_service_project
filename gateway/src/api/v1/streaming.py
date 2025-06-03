@@ -206,7 +206,7 @@ async def websocket_chunks(websocket: WebSocket, session_id: str):
         return
     
     session_state.websockets[session_id] = websocket
-    
+    is_artificial = False
     try:
         ack_counter = 0
         last_chunk_number = 0
@@ -214,7 +214,9 @@ async def websocket_chunks(websocket: WebSocket, session_id: str):
         while True:
             # Получаем чанк из очереди
             chunk = await session_state.chunk_queues[session_id].get()
-            await websocket.send_text(str(chunk.number))
+
+            if not is_artificial:
+                await websocket.send_text(str(chunk.number))
 
             ack_counter += 1
             
@@ -224,7 +226,7 @@ async def websocket_chunks(websocket: WebSocket, session_id: str):
                 ack_counter = 0
  
                 if chunk.is_last:
-                    break
+                    is_artificial = True
                 
     except WebSocketDisconnect:
         pass

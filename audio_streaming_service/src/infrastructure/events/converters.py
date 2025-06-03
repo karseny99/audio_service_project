@@ -13,6 +13,7 @@ from src.core.protos.generated.events_pb2 import (
     SessionPaused as SessionPausedProto,
     SessionResumed as SessionResumedProto,
     SessionStopped as SessionStoppedProto,
+    SessionHistory as SessionHistoryProto,
 )
 
 from src.domain.events.events import (
@@ -23,6 +24,7 @@ from src.domain.events.events import (
     SessionPaused,
     SessionResumed,
     SessionStopped,
+    SessionHistory,
 )
 
 class SessionEventConverters(BaseEventConverter):
@@ -98,6 +100,16 @@ class SessionEventConverters(BaseEventConverter):
         return SessionStoppedProto(
             session_id=event.session_id,
             total_chunks_sent=event.total_chunks_sent,
+            timestamp=SessionEventConverters._convert_datetime_to_proto(event.timestamp)
+        )
+
+    @to_proto.register
+    @staticmethod
+    def _(event: SessionHistory) -> SessionHistoryProto:
+        return SessionHistoryProto(
+            user_id=int(event.user_id),
+            total_chunks_sent=int(event.total_chunks_sent),
+            total_chunks=int(event.total_chunks),
             timestamp=SessionEventConverters._convert_datetime_to_proto(event.timestamp)
         )
 
