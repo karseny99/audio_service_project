@@ -49,7 +49,7 @@ class Container(containers.DeclarativeContainer):
     history_kafka_publisher = providers.Singleton(
         KafkaEventPublisher,
         broker=kafka_broker,
-        destination=[settings.KAFKA_PLAYLIST_CONTEXT_TOPIC],
+        destination=[settings.KAFKA_LISTENING_HISTORY_CONTEXT_TOPIC],
         converters=SessionEventConverters,
     )
 

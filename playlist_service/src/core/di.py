@@ -80,14 +80,15 @@ class Container(containers.DeclarativeContainer):
     
     # Настройка маппинга событий
     event_mappings = providers.Dict(
-    {
-        "UserDeleted": providers.Factory(  # Ключ - строка, которая соответствует event-type из заголовка Kafka
-            EventTypeMapping,
-            proto_type=providers.Object(UserEvents_pb2.UserDeleted),
-            handler=user_deleted_handler
-        ),
-    }
-)
+        {
+            "UserDeleted": providers.Factory(  # Ключ - строка, которая соответствует event-type из заголовка Kafka
+                EventTypeMapping,
+                proto_type=providers.Object(UserEvents_pb2.UserDeleted),
+                handler=user_deleted_handler
+            ),
+
+        }
+    )
 
     # Kafka Consumer 
     kafka_consumer = providers.Singleton(

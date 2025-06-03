@@ -52,6 +52,7 @@ class SessionStopped(SessionEvent):
 @dataclass
 class SessionHistory(SessionEvent):
     user_id: int
+    track_id: int
     total_chunks_sent: int
     total_chunks: int
     timestamp: datetime

@@ -108,6 +108,7 @@ class SessionEventConverters(BaseEventConverter):
     def _(event: SessionHistory) -> SessionHistoryProto:
         return SessionHistoryProto(
             user_id=int(event.user_id),
+            track_id=int(event.track_id),
             total_chunks_sent=int(event.total_chunks_sent),
             total_chunks=int(event.total_chunks),
             timestamp=SessionEventConverters._convert_datetime_to_proto(event.timestamp)

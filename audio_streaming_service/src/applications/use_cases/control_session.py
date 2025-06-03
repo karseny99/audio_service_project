@@ -97,8 +97,9 @@ class StopSessionUseCase:
         await self._history_event_publisher.publish(
             event=SessionHistory(
                 user_id=session.user_id,
+                track_id=session.track.track_id,
                 total_chunks=session.track.total_chunks,
-                total_chunks_sent=session.total_chunks_sent,
+                total_chunks_sent=session.total_chunks_sent-1,
                 timestamp=datetime.now()
             ),
             key=str(session.user_id)

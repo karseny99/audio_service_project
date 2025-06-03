@@ -1,3 +1,4 @@
+from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Optional, List
 from src.domain.user_likes.models import UserLike
@@ -33,7 +34,7 @@ class UserLikesRepository(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def add_to_history(self, user_id: int, track_id: int) -> bool:
+    async def add_to_history(self, user_id: int, track_id: int, timestamp: datetime) -> bool:
         raise NotImplementedError
     
 
