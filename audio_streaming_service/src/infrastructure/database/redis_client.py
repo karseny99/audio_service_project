@@ -36,6 +36,13 @@ class RedisClient:
     async def set(self, key: str, value: bytes, ex: int = None) -> None:
         await self._redis.set(key, value, ex=ex)
 
+    async def delete(self, key: str) -> bool:
+        try:
+            return await self._redis.delete(key),
+        except Exception as e:
+            logger.error(f"Redis delete operation timed out for key {key}, detail {str(e)}")
+            raise e
+
     @property
     def client(self):
         if not self._redis:

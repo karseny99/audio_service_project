@@ -17,6 +17,9 @@ class UserLikedTrackEvent(HistoryEvent):
     timestamp: datetime
 
 @dataclass 
-class TrackListened:
-    current_chunk: int
+class TrackListened(HistoryEvent):
+    user_id: int
+    track_id: int
+    total_chunks_sent: int
     total_chunks: int
+    timestamp: datetime

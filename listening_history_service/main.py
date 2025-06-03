@@ -24,7 +24,7 @@ async def main():
     container = Container()
     container.wire(modules=["src.infrastructure.grpc.server"])
 
-    # consumer = await container.kafka_consumer().start()
+    consumer = await container.kafka_consumer().start()
 
     await asyncio.gather(
         serve_grpc(),  # gRPC-сервер

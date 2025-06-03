@@ -266,7 +266,7 @@ class S3AudioStreamer(AudioStreamer):
                 is_last=is_last,
                 bitrate=self.current_bitrate,
             )
-            await asyncio.sleep(.1)
+            await asyncio.sleep(.025)
             chunk_number += 1
             remaining_bytes = self.object_size - self.current_offset
 

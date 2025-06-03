@@ -16,6 +16,7 @@ from src.infrastructure.event_handlers.track_listened import TrackListenedHandle
 
 from src.core.protos.generated import UserEvents_pb2
 from src.core.protos.generated import TrackEvents_pb2
+from src.core.protos.generated import StreamEvents_pb2
 from src.core.config import settings
 
 class Container(containers.DeclarativeContainer):
@@ -82,7 +83,7 @@ class Container(containers.DeclarativeContainer):
 
     track_listened_handler = providers.Factory(
         TrackListenedHandler,
-        use_case=handle_user_deleted_use_case
+        use_case=handle_track_listened_use_case
     )
     
 #     # Настройка маппинга событий
@@ -93,11 +94,12 @@ class Container(containers.DeclarativeContainer):
                 proto_type=providers.Object(UserEvents_pb2.UserDeleted),
                 handler=user_deleted_handler
             ),
-            "TrackListened" : providers.Factory( 
+            "SessionHistory": providers.Factory(  
                 EventTypeMapping,
-                proto_type=providers.Object(TrackEvents_pb2.TrackListened),
-                handler=handle_track_listened_use_case
+                proto_type=providers.Object(StreamEvents_pb2.SessionHistory),
+                handler=track_listened_handler
             ),
+
         }
     )
 
@@ -105,6 +107,6 @@ class Container(containers.DeclarativeContainer):
     kafka_consumer = providers.Singleton(
         KafkaConsumer,
         broker=kafka_broker,
-        topic=settings.KAFKA_USER_TOPIC,
+        topic=settings.KAFKA_LISTENING_HISTORY_TOPIC,
         event_mappings=event_mappings
     )

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import select, delete, update, func
 from sqlalchemy.orm import joinedload
@@ -99,19 +100,26 @@ class PostgresUserLikesRepository(UserLikesRepository):
         )
 
     @ConnectionDecorator(isolation_level="READ COMMITTED")
-    async def add_to_history(self, user_id: UserId, track_id: TrackId, session: Optional[AsyncSession] = None) -> bool:
+    async def add_to_history(self, user_id: int, track_id: int, timestamp: datetime, session: Optional[AsyncSession] = None) -> bool:
         stmt = select(UserHistoryORM).where(
             (UserHistoryORM.user_id == user_id) &
             (UserHistoryORM.track_id == track_id)
         ).limit(1)
         
         existing = await session.execute(stmt)
-        if existing.scalar_one_or_none() is not None:
-            return False
+        existing_item = existing.scalar_one_or_none()
         
+        if existing_item is not None:
+            await session.delete(existing_item)
+            await session.flush()  
+        
+        # 3. Добавляем новую запись
         new_history_item = UserHistoryORM(
             user_id=user_id,
-            track_id=track_id
+            track_id=track_id,
+            timestamp=timestamp,
         )
         session.add(new_history_item)
-        return True
+        
+        return existing_item is not None
+
