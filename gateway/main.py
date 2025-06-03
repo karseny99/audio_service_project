@@ -23,7 +23,7 @@ app.include_router(users_router)
 app.include_router(users_likes_router)
 app.include_router(tracks_router)
 app.include_router(streaming_router)
-app.add_middleware(AuthMiddleware)
+# app.add_middleware(AuthMiddleware)
 app.middleware("http")(metrics_middleware)
 app.include_router(metrics.router)
 

@@ -1,0 +1,166 @@
+slice_name: "\u041A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u043E\u0442\
+  \u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445 \u0438 \u043F\u043E\
+  \u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u0447\u0430\u043D\u043A\u043E\u0432"
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_area
+params:
+  datasource: 8__table
+  viz_type: echarts_area
+  x_axis: date
+  time_grain_sqla: P1D
+  metrics:
+  - expressionType: SIMPLE
+    column:
+      advanced_data_type: null
+      certification_details: null
+      certified_by: null
+      column_name: sent_chunks
+      description: null
+      expression: null
+      filterable: true
+      groupby: true
+      id: null
+      is_certified: false
+      is_dttm: false
+      python_date_format: null
+      type: Int64
+      type_generic: 0
+      verbose_name: null
+      warning_markdown: null
+    aggregate: SUM
+    sqlExpression: null
+    datasourceWarning: false
+    hasCustomLabel: false
+    label: SUM(sent_chunks)
+    optionName: metric_s6m5vdwqp9_9t32jtmlmt
+  - expressionType: SIMPLE
+    column:
+      advanced_data_type: null
+      certification_details: null
+      certified_by: null
+      column_name: acked_chunks
+      description: null
+      expression: null
+      filterable: true
+      groupby: true
+      id: null
+      is_certified: false
+      is_dttm: false
+      python_date_format: null
+      type: Float64
+      type_generic: 0
+      verbose_name: null
+      warning_markdown: null
+    aggregate: SUM
+    sqlExpression: null
+    datasourceWarning: false
+    hasCustomLabel: false
+    label: SUM(acked_chunks)
+    optionName: metric_5kqzk2pu6sk_2zvbl70gig
+  groupby: []
+  adhoc_filters:
+  - clause: WHERE
+    subject: date
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    expressionType: SIMPLE
+  row_limit: 1000
+  truncate_metric: true
+  show_empty_columns: true
+  comparison_type: values
+  annotation_layers: []
+  forecastPeriods: 10
+  forecastInterval: 0.8
+  x_axis_title: "\u0414\u0430\u0442\u0430"
+  x_axis_title_margin: 30
+  y_axis_title: "\u041A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E"
+  y_axis_title_margin: 30
+  y_axis_title_position: Left
+  sort_series_type: sum
+  color_scheme: supersetColors
+  seriesType: line
+  opacity: 0.2
+  show_value: true
+  show_legend: true
+  legendType: scroll
+  legendOrientation: top
+  x_axis_time_format: '%m/%d/%Y'
+  rich_tooltip: true
+  showTooltipTotal: true
+  showTooltipPercentage: true
+  tooltipTimeFormat: smart_date
+  y_axis_format: SMART_NUMBER
+  truncateXAxis: true
+  truncateYAxis: true
+  y_axis_bounds:
+  - null
+  - null
+  extra_form_data: {}
+  dashboards: []
+query_context: "{\"datasource\":{\"id\":8,\"type\":\"table\"},\"force\":false,\"queries\"\
+  :[{\"filters\":[{\"col\":\"date\",\"op\":\"TEMPORAL_RANGE\",\"val\":\"No filter\"\
+  }],\"extras\":{\"time_grain_sqla\":\"P1D\",\"having\":\"\",\"where\":\"\"},\"applied_time_extras\"\
+  :{},\"columns\":[{\"timeGrain\":\"P1D\",\"columnType\":\"BASE_AXIS\",\"sqlExpression\"\
+  :\"date\",\"label\":\"date\",\"expressionType\":\"SQL\"}],\"metrics\":[{\"expressionType\"\
+  :\"SIMPLE\",\"column\":{\"advanced_data_type\":null,\"certification_details\":null,\"\
+  certified_by\":null,\"column_name\":\"sent_chunks\",\"description\":null,\"expression\"\
+  :null,\"filterable\":true,\"groupby\":true,\"id\":null,\"is_certified\":false,\"\
+  is_dttm\":false,\"python_date_format\":null,\"type\":\"Int64\",\"type_generic\"\
+  :0,\"verbose_name\":null,\"warning_markdown\":null},\"aggregate\":\"SUM\",\"sqlExpression\"\
+  :null,\"datasourceWarning\":false,\"hasCustomLabel\":false,\"label\":\"SUM(sent_chunks)\"\
+  ,\"optionName\":\"metric_s6m5vdwqp9_9t32jtmlmt\"},{\"expressionType\":\"SIMPLE\"\
+  ,\"column\":{\"advanced_data_type\":null,\"certification_details\":null,\"certified_by\"\
+  :null,\"column_name\":\"acked_chunks\",\"description\":null,\"expression\":null,\"\
+  filterable\":true,\"groupby\":true,\"id\":null,\"is_certified\":false,\"is_dttm\"\
+  :false,\"python_date_format\":null,\"type\":\"Float64\",\"type_generic\":0,\"verbose_name\"\
+  :null,\"warning_markdown\":null},\"aggregate\":\"SUM\",\"sqlExpression\":null,\"\
+  datasourceWarning\":false,\"hasCustomLabel\":false,\"label\":\"SUM(acked_chunks)\"\
+  ,\"optionName\":\"metric_5kqzk2pu6sk_2zvbl70gig\"}],\"orderby\":[[{\"expressionType\"\
+  :\"SIMPLE\",\"column\":{\"advanced_data_type\":null,\"certification_details\":null,\"\
+  certified_by\":null,\"column_name\":\"sent_chunks\",\"description\":null,\"expression\"\
+  :null,\"filterable\":true,\"groupby\":true,\"id\":null,\"is_certified\":false,\"\
+  is_dttm\":false,\"python_date_format\":null,\"type\":\"Int64\",\"type_generic\"\
+  :0,\"verbose_name\":null,\"warning_markdown\":null},\"aggregate\":\"SUM\",\"sqlExpression\"\
+  :null,\"datasourceWarning\":false,\"hasCustomLabel\":false,\"label\":\"SUM(sent_chunks)\"\
+  ,\"optionName\":\"metric_s6m5vdwqp9_9t32jtmlmt\"},false]],\"annotation_layers\"\
+  :[],\"row_limit\":1000,\"series_columns\":[],\"series_limit\":0,\"order_desc\":true,\"\
+  url_params\":{},\"custom_params\":{},\"custom_form_data\":{},\"time_offsets\":[],\"\
+  post_processing\":[{\"operation\":\"pivot\",\"options\":{\"index\":[\"date\"],\"\
+  columns\":[],\"aggregates\":{\"SUM(sent_chunks)\":{\"operator\":\"mean\"},\"SUM(acked_chunks)\"\
+  :{\"operator\":\"mean\"}},\"drop_missing_columns\":false}},{\"operation\":\"flatten\"\
+  }]}],\"form_data\":{\"datasource\":\"8__table\",\"viz_type\":\"echarts_area\",\"\
+  x_axis\":\"date\",\"time_grain_sqla\":\"P1D\",\"metrics\":[{\"expressionType\":\"\
+  SIMPLE\",\"column\":{\"advanced_data_type\":null,\"certification_details\":null,\"\
+  certified_by\":null,\"column_name\":\"sent_chunks\",\"description\":null,\"expression\"\
+  :null,\"filterable\":true,\"groupby\":true,\"id\":null,\"is_certified\":false,\"\
+  is_dttm\":false,\"python_date_format\":null,\"type\":\"Int64\",\"type_generic\"\
+  :0,\"verbose_name\":null,\"warning_markdown\":null},\"aggregate\":\"SUM\",\"sqlExpression\"\
+  :null,\"datasourceWarning\":false,\"hasCustomLabel\":false,\"label\":\"SUM(sent_chunks)\"\
+  ,\"optionName\":\"metric_s6m5vdwqp9_9t32jtmlmt\"},{\"expressionType\":\"SIMPLE\"\
+  ,\"column\":{\"advanced_data_type\":null,\"certification_details\":null,\"certified_by\"\
+  :null,\"column_name\":\"acked_chunks\",\"description\":null,\"expression\":null,\"\
+  filterable\":true,\"groupby\":true,\"id\":null,\"is_certified\":false,\"is_dttm\"\
+  :false,\"python_date_format\":null,\"type\":\"Float64\",\"type_generic\":0,\"verbose_name\"\
+  :null,\"warning_markdown\":null},\"aggregate\":\"SUM\",\"sqlExpression\":null,\"\
+  datasourceWarning\":false,\"hasCustomLabel\":false,\"label\":\"SUM(acked_chunks)\"\
+  ,\"optionName\":\"metric_5kqzk2pu6sk_2zvbl70gig\"}],\"groupby\":[],\"adhoc_filters\"\
+  :[{\"clause\":\"WHERE\",\"subject\":\"date\",\"operator\":\"TEMPORAL_RANGE\",\"\
+  comparator\":\"No filter\",\"expressionType\":\"SIMPLE\"}],\"row_limit\":1000,\"\
+  truncate_metric\":true,\"show_empty_columns\":true,\"comparison_type\":\"values\"\
+  ,\"annotation_layers\":[],\"forecastPeriods\":10,\"forecastInterval\":0.8,\"x_axis_title\"\
+  :\"\u0414\u0430\u0442\u0430\",\"x_axis_title_margin\":30,\"y_axis_title\":\"\u041A\
+  \u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E\",\"y_axis_title_margin\"\
+  :30,\"y_axis_title_position\":\"Left\",\"sort_series_type\":\"sum\",\"color_scheme\"\
+  :\"supersetColors\",\"seriesType\":\"line\",\"opacity\":0.2,\"show_value\":true,\"\
+  show_legend\":true,\"legendType\":\"scroll\",\"legendOrientation\":\"top\",\"x_axis_time_format\"\
+  :\"%m/%d/%Y\",\"rich_tooltip\":true,\"showTooltipTotal\":true,\"showTooltipPercentage\"\
+  :true,\"tooltipTimeFormat\":\"smart_date\",\"y_axis_format\":\"SMART_NUMBER\",\"\
+  truncateXAxis\":true,\"truncateYAxis\":true,\"y_axis_bounds\":[null,null],\"extra_form_data\"\
+  :{},\"dashboards\":[],\"force\":false,\"result_format\":\"json\",\"result_type\"\
+  :\"full\"},\"result_format\":\"json\",\"result_type\":\"full\"}"
+cache_timeout: null
+uuid: f8e1e187-ba47-4a78-b4cd-ee60f12d29a5
+version: 1.0.0
+dataset_uuid: b0a98a24-0659-4025-9e56-a2e3d609612d

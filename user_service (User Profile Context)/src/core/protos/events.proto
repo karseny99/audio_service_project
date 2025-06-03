@@ -1,10 +1,13 @@
-// События, которые контекст публикует
 syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
 
 message UserDeleted {
     string user_id = 1;
+
 }
 
 message UserRegistered {
     string user_id = 1;
+    google.protobuf.Timestamp timestamp = 2;
 }

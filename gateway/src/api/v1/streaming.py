@@ -6,6 +6,7 @@ from fastapi.websockets import WebSocketState
 import grpc
 from pydantic import BaseModel
 
+from src.core.logger import logger
 from src.core.config import settings
 import src.protos.streaming_context.generated.streaming_pb2 as pb2 
 import src.protos.streaming_context.generated.streaming_pb2_grpc as pb2_grpc 
@@ -219,7 +220,8 @@ async def websocket_chunks(websocket: WebSocket, session_id: str):
             last_chunk_number = chunk.number
             
             # Отправляем подтверждение 
-            if ack_counter >= 10:
+            logger.debug(chunk.is_last)
+            if ack_counter >= 10 or chunk.is_last:
                 await session_state.active_sessions[session_id]["client"].send_ack(ack_counter)
                 ack_counter = 0
                 
@@ -229,7 +231,9 @@ async def websocket_chunks(websocket: WebSocket, session_id: str):
         print(f"WebSocket error: {e}")
     finally:
         # Отправляем оставшиеся подтверждения
+        print("lasts: ", ack_counter)
         if ack_counter > 0 and session_id in session_state.active_sessions:
+            print("lasts: ", ack_counter)
             await session_state.active_sessions[session_id]["client"].send_ack(ack_counter)
             ack_counter = 0
         

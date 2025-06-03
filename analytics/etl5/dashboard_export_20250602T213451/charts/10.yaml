@@ -1,0 +1,68 @@
+slice_name: "\u0420\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\
+  \u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u0439 \u043F\u043E \u0442\u0438\u043F\
+  \u0443"
+description: null
+certified_by: null
+certification_details: null
+viz_type: pie
+params:
+  datasource: 4__table
+  viz_type: pie
+  groupby:
+  - event_type
+  metric: count
+  adhoc_filters:
+  - expressionType: SIMPLE
+    subject: timestamp
+    operator: TEMPORAL_RANGE
+    comparator: No filter
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_cgjfoxm8h9i_ctamd193o2
+  - expressionType: SIMPLE
+    subject: event_type
+    operator: IN
+    operatorId: IN
+    comparator:
+    - SessionStarted
+    - SessionPaused
+    - OffsetChangedEvent
+    - SessionStopped
+    - SessionResumed
+    - BitrateChangedEvent
+    clause: WHERE
+    sqlExpression: null
+    isExtra: false
+    isNew: false
+    datasourceWarning: false
+    filterOptionName: filter_s4ywme59npr_lnqzchovk5d
+  row_limit: 10000
+  sort_by_metric: true
+  color_scheme: supersetColors
+  show_labels_threshold: 5
+  show_legend: true
+  legendType: scroll
+  legendOrientation: top
+  legendMargin: null
+  label_type: key
+  number_format: SMART_NUMBER
+  date_format: smart_date
+  show_labels: true
+  labels_outside: true
+  label_line: true
+  show_total: false
+  outerRadius: 72
+  donut: false
+  innerRadius: 30
+  extra_form_data: {}
+  dashboards: []
+query_context: '{"datasource":{"id":4,"type":"table"},"force":false,"queries":[{"filters":[{"col":"timestamp","op":"TEMPORAL_RANGE","val":"No
+  filter"},{"col":"event_type","op":"IN","val":["SessionStarted","SessionPaused","OffsetChangedEvent","SessionStopped","SessionResumed","BitrateChangedEvent"]}],"extras":{"having":"","where":""},"applied_time_extras":{},"columns":["event_type"],"metrics":["count"],"orderby":[["count",false]],"annotation_layers":[],"row_limit":10000,"series_limit":0,"order_desc":true,"url_params":{},"custom_params":{},"custom_form_data":{}}],"form_data":{"datasource":"4__table","viz_type":"pie","groupby":["event_type"],"metric":"count","adhoc_filters":[{"expressionType":"SIMPLE","subject":"timestamp","operator":"TEMPORAL_RANGE","comparator":"No
+  filter","clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_cgjfoxm8h9i_ctamd193o2"},{"expressionType":"SIMPLE","subject":"event_type","operator":"IN","operatorId":"IN","comparator":["SessionStarted","SessionPaused","OffsetChangedEvent","SessionStopped","SessionResumed","BitrateChangedEvent"],"clause":"WHERE","sqlExpression":null,"isExtra":false,"isNew":false,"datasourceWarning":false,"filterOptionName":"filter_s4ywme59npr_lnqzchovk5d"}],"row_limit":10000,"sort_by_metric":true,"color_scheme":"supersetColors","show_labels_threshold":5,"show_legend":true,"legendType":"scroll","legendOrientation":"top","legendMargin":null,"label_type":"key","number_format":"SMART_NUMBER","date_format":"smart_date","show_labels":true,"labels_outside":true,"label_line":true,"show_total":false,"outerRadius":72,"donut":false,"innerRadius":30,"extra_form_data":{},"dashboards":[],"force":false,"result_format":"json","result_type":"full"},"result_format":"json","result_type":"full"}'
+cache_timeout: null
+uuid: ef84399f-7ede-4222-8ec3-8db190a288f6
+version: 1.0.0
+dataset_uuid: 92f97f93-e386-4ac8-be7b-7cf2357b772d

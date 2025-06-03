@@ -100,7 +100,7 @@ async def handle(msg: KafkaMessage):
             save_to_postgres("users_events", {
                 "event_type": event_type,
                 "user_id": event.user_id,
-                "timestamp": ts
+                "timestamp": datetime.now()
             })
 
         elif event_type == "SessionStarted":

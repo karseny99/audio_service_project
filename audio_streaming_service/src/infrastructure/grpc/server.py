@@ -104,8 +104,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
                             await self._update_session_use_case.execute(session)
 
                         if chunk.is_last:
-                            session.status = StreamStatus.STOPPED
-                            session.finished_at = datetime.now()
+                            session.stop()
 
                 except _StreamRestartException:
                     yield self._create_session_info_message(session)
@@ -122,6 +121,7 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             await context.abort(StatusCode.INTERNAL, str(e))
         finally:
             if session:
+                await self._acknowledge_chunks_use_case.execute(session.track.total_chunks % 10, session)
                 await self._stop_session_use_case.execute(session)
                 yield self._create_session_info_message(session)
 
@@ -132,7 +132,6 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             return context.done() or await context.is_active() is False
         except Exception:
             return True
-
 
     async def _init_session(self, request_iterator) -> StreamSession:
         """Инициализирует сессию из первого сообщения клиента"""
@@ -205,16 +204,17 @@ class StreamingService(streaming_pb2_grpc.StreamingServiceServicer):
             return streaming_pb2.SessionInfo.Status.ACTIVE
 
 
-    async def _read_client_messages(self, request_iterator, message_queue):
+    async def _read_client_messages(self, request_iterator, message_queue: asyncio.Queue):
         """Читает сообщения от клиента и помещает в очередь сессии"""
         try:
             async for request in request_iterator:
                 logger.info(f"Received message: {request}")
                 await message_queue.put(request)
+                
         except Exception as e:
             logger.error(f"Error reading client messages: {str(e)}")
         finally:
-            logger.info("Client message reader stopped")
+            logger.info(f"Client message reader stopped {message_queue.qsize()}")
 
 
     async def _wait_for_resume(self, session: StreamSession, context):

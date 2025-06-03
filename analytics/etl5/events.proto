@@ -47,6 +47,7 @@ message SessionStopped {
 
 message UserRegistered {
     string user_id = 1;
+    google.protobuf.Timestamp timestamp = 5;
 }
 
 message TrackAddedToPlaylist {
