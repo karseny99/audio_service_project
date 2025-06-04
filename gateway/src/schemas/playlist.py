@@ -5,3 +5,13 @@ class AddPlaylistRequest(BaseModel):
 
 class AddPlaylistResponse(BaseModel):
     message: str
+
+class CreatePlaylistReqest(BaseModel):
+    user_id: str
+    title: str
+    is_public : bool
+
+
+class CreatePlaylistResponse(BaseModel):
+    status: str
+    playlist_id: str
