@@ -52,27 +52,27 @@ async def search_tracks(
         page_size=request.page_size
     )
     
-    try:
-        response = stub.Search(grpc_request)
-        return TrackSearchResponse(
-            tracks=[
-                TrackItemResponse(
-                    track_id=t.track_id,
-                    title=t.title,
-                    duration_ms=t.duration_ms,
-                    artists=list(t.artists),
-                    genres=list(t.genres),
-                    explicit=t.explicit,
-                    release_date=t.release_date
-                ) for t in response.tracks
-            ],
-            total=response.total,
-            page=response.page,
-            page_size=response.page_size
-        )
-    except Exception as e:
-        # logger.error(f"Search error: {str(e)}")
-        raise HTTPException(500, detail="Internal server error")
+    # try:
+    response = stub.Search(grpc_request)
+    return TrackSearchResponse(
+        tracks=[
+            TrackItemResponse(
+                track_id=t.track_id,
+                title=t.title,
+                duration_ms=t.duration_ms,
+                artists=list(t.artists),
+                genres=list(t.genres),
+                explicit=t.explicit,
+                release_date=t.release_date
+            ) for t in response.tracks
+        ],
+        total=response.total,
+        page=response.page,
+        page_size=response.page_size
+    )
+    # except Exception as e:
+    #     # logger.error(f"Search error: {str(e)}")
+    #     raise HTTPException(500, detail="Internal server error")
 
 @router.get("/artist", response_model=TracksPaginationResponse)
 @inject

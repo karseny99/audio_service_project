@@ -177,12 +177,30 @@ services:
     networks:
       - minio_net
 
+  elasticsearch:
+    image: elasticsearch:8.18.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g  
+      - xpack.security.enabled=false
+      - bootstrap.memory_lock=true   
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+
 volumes:
   zookeeper_data:
   kafka_data:
   postgres_data:
   redis_data:
   minio_data:
+  es_data:
 
 networks:
   minio_net:
