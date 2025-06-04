@@ -3,8 +3,11 @@ from faststream.kafka import KafkaBroker
 
 from src.applications.use_cases.add_track import AddTrackToPlaylistUseCase
 from src.applications.use_cases.delete_user import HandleUserDeletedUseCase
+from src.applications.use_cases.add_playlist import AddPlaylistUseCase
 
 from src.infrastructure.database.repositories.playlist_repository import PostgresPlaylistRepository
+from src.infrastructure.database.repositories.playlist_subscription_repository import  PostgresPlaylistSubscriptionRepository
+
 from src.infrastructure.external.track_service import TrackServiceClient
 from src.infrastructure.kafka.publisher import KafkaEventPublisher
 from src.infrastructure.kafka.consumer import KafkaConsumer, EventTypeMapping
@@ -27,6 +30,10 @@ class Container(containers.DeclarativeContainer):
     # Репозитории
     playlist_repository = providers.Singleton(
         PostgresPlaylistRepository
+    )
+
+    playlist_subscription_repository = providers.Singleton(
+        PostgresPlaylistSubscriptionRepository
     )
 
     # Kafka зависимости
@@ -65,6 +72,12 @@ class Container(containers.DeclarativeContainer):
         playlist_repo=playlist_repository,
         track_service=track_service_client,
         event_publisher=kafka_publisher
+    )
+
+    add_playlist_use_case = providers.Factory(
+        AddPlaylistUseCase,
+        playlist_repo=playlist_repository,
+        subscription_repo=playlist_subscription_repository
     )
 
     handle_user_deleted_use_case = providers.Factory(

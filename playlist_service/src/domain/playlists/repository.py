@@ -47,3 +47,13 @@ class PlaylistRepository(ABC):
         Возвращает количество удаленных связей
         """
         raise NotImplementedError
+
+
+class PlaylistSubscriptionRepository(ABC):
+    @abstractmethod
+    async def is_subscribed(self, user_id: str, playlist_id: int) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def add_subscription(self, user_id: str, playlist_id: int) -> None:
+        raise NotImplementedError

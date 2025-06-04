@@ -186,3 +186,11 @@ class PostgresPlaylistRepository(PlaylistRepository):
         deleted_records = result.all()
         
         return len(deleted_records)
+    
+    @ConnectionDecorator(isolation_level="READ COMMITTED")
+    async def is_public(self, playlist_id: int, session: Optional[AsyncSession] = None) -> bool:
+        stmt = select(PlaylistORM.is_public).where(
+            PlaylistORM.playlist_id == playlist_id
+        )
+        result = await session.execute(stmt)
+        return result.scalar_one()
