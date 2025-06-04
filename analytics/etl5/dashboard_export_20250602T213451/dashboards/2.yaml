@@ -1,0 +1,346 @@
+dashboard_title: "\u041C\u0443\u0437\u044B\u043A\u0430\u043B\u044C\u043D\u044B\u0439\
+  \ \u0441\u0435\u0440\u0432\u0438\u0441"
+description: null
+css: ''
+slug: null
+certified_by: ''
+certification_details: ''
+published: false
+uuid: 2cf1d789-da73-4666-9f2f-2bcfe49a2e23
+position:
+  CHART-12DYxftjXx1KjlAs6yEyf:
+    children: []
+    id: CHART-12DYxftjXx1KjlAs6yEyf
+    meta:
+      chartId: 9
+      height: 50
+      sliceName: "\u0422\u043E\u043F \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442\
+        \u043E\u0432 \u043F\u043E \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\
+        \u0438\u044F\u043C \u0438\u0437 \u043D\u0438\u0445 \u043F\u0440\u043E\u0438\
+        \u0437\u0432\u0435\u0434\u0435\u043D\u0438\u0439"
+      uuid: 1a7e4597-b73a-498e-b70f-639cb7662370
+      width: 4
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1_PKFIQkiiOfINkugk0Dy
+    type: CHART
+  CHART-3K0OHHlgNUY5PxGTjgZce:
+    children: []
+    id: CHART-3K0OHHlgNUY5PxGTjgZce
+    meta:
+      chartId: 12
+      height: 50
+      sliceName: DAU
+      uuid: 593a1aaa-c484-42ec-b191-505c4fef2feb
+      width: 12
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kPcJbotOd3ocjJXiah4bj
+    type: CHART
+  CHART-9pGKrWSOt8RwdP95T4t7W:
+    children: []
+    id: CHART-9pGKrWSOt8RwdP95T4t7W
+    meta:
+      chartId: 8
+      height: 50
+      sliceName: "\u0414\u0438\u043D\u0430\u043C\u0438\u043A\u0430 \u0434\u043E\u0431\
+        \u0430\u0432\u043B\u0435\u043D\u0438\u0439 \u0442\u0440\u0435\u043A\u043E\u0432\
+        \ \u043F\u043E \u0434\u043D\u044F\u043C"
+      uuid: ee16924c-a34a-48d5-a213-82fd2ee2f54c
+      width: 8
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-KtpO7Do2bhXoNk0eZIPOE
+    type: CHART
+  CHART-A_Fp1W3p9osjWHEgtMRrb:
+    children: []
+    id: CHART-A_Fp1W3p9osjWHEgtMRrb
+    meta:
+      chartId: 11
+      height: 50
+      sliceName: "\u0421\u0440\u0435\u0434\u043D\u044F\u044F \u0434\u043B\u0438\u0442\
+        \u0435\u043B\u044C\u043D\u043E\u0441\u0442\u044C \u0441\u0435\u0441\u0441\u0438\
+        \u0439 (\u0432 \u043C\u0438\u043D\u0443\u0442\u0430\u0445)"
+      uuid: dc27ed35-6a62-4fc1-a155-2c335b4fc552
+      width: 4
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1_PKFIQkiiOfINkugk0Dy
+    type: CHART
+  CHART-QuiQdgWq6CkseJQL599eU:
+    children: []
+    id: CHART-QuiQdgWq6CkseJQL599eU
+    meta:
+      chartId: 13
+      height: 102
+      sliceName: "\u041A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u043E\
+        \u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445 \u0438\
+        \ \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u0447\u0430\
+        \u043D\u043A\u043E\u0432"
+      uuid: f8e1e187-ba47-4a78-b4cd-ee60f12d29a5
+      width: 4
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-idL0Iai5J_GGjFkdVTYYa
+    type: CHART
+  CHART-eN3gPGNdwxxjFJVpFInPp:
+    children: []
+    id: CHART-eN3gPGNdwxxjFJVpFInPp
+    meta:
+      chartId: 10
+      height: 102
+      sliceName: "\u0420\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\
+        \u0438\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u0439 \u043F\u043E \u0442\
+        \u0438\u043F\u0443"
+      uuid: ef84399f-7ede-4222-8ec3-8db190a288f6
+      width: 8
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-idL0Iai5J_GGjFkdVTYYa
+    type: CHART
+  CHART-j6QnWkdEWXyMOoWdNg-gE:
+    children: []
+    id: CHART-j6QnWkdEWXyMOoWdNg-gE
+    meta:
+      chartId: 6
+      height: 50
+      sliceName: "\u0422\u043E\u043F \u043F\u043E\u043F\u0443\u043B\u044F\u0440\u043D\
+        \u044B\u0445 \u0442\u0440\u0435\u043A\u043E\u0432 (\u043F\u043E \u043A\u043E\
+        \u043B\u0438\u0447\u0435\u0441\u0442\u0432\u0443 \u0434\u043E\u0431\u0430\u0432\
+        \u043B\u0435\u043D\u0438\u0439 \u0432 \u043F\u043B\u0435\u0439\u043B\u0438\
+        \u0441\u0442\u044B)"
+      uuid: c36b65db-b3b5-4f51-9680-5145e0a0a930
+      width: 4
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1_PKFIQkiiOfINkugk0Dy
+    type: CHART
+  CHART-uQBB7LQ7z6PYAd5CkVNkb:
+    children: []
+    id: CHART-uQBB7LQ7z6PYAd5CkVNkb
+    meta:
+      chartId: 7
+      height: 50
+      sliceName: "\u0422\u043E\u043F \u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0445\
+        \ \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\
+        \u0439 (\u043A\u0442\u043E \u0447\u0430\u0449\u0435 \u0432\u0441\u0435\u0445\
+        \ \u0434\u043E\u0431\u0430\u0432\u043B\u044F\u0435\u0442 \u0442\u0440\u0435\
+        \u043A\u0438 \u0432 \u043F\u043B\u0435\u0439\u043B\u0438\u0441\u0442\u044B\
+        )"
+      uuid: fbeef163-3562-40b1-97f5-1b0efea78b9b
+      width: 4
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-KtpO7Do2bhXoNk0eZIPOE
+    type: CHART
+  DASHBOARD_VERSION_KEY: v2
+  GRID_ID:
+    children:
+    - ROW-1_PKFIQkiiOfINkugk0Dy
+    - ROW-KtpO7Do2bhXoNk0eZIPOE
+    - ROW-idL0Iai5J_GGjFkdVTYYa
+    - ROW-kPcJbotOd3ocjJXiah4bj
+    id: GRID_ID
+    parents:
+    - ROOT_ID
+    type: GRID
+  HEADER_ID:
+    id: HEADER_ID
+    meta:
+      text: "\u041C\u0443\u0437\u044B\u043A\u0430\u043B\u044C\u043D\u044B\u0439 \u0441\
+        \u0435\u0440\u0432\u0438\u0441"
+    type: HEADER
+  ROOT_ID:
+    children:
+    - GRID_ID
+    id: ROOT_ID
+    type: ROOT
+  ROW-1_PKFIQkiiOfINkugk0Dy:
+    children:
+    - CHART-12DYxftjXx1KjlAs6yEyf
+    - CHART-j6QnWkdEWXyMOoWdNg-gE
+    - CHART-A_Fp1W3p9osjWHEgtMRrb
+    id: ROW-1_PKFIQkiiOfINkugk0Dy
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-KtpO7Do2bhXoNk0eZIPOE:
+    children:
+    - CHART-9pGKrWSOt8RwdP95T4t7W
+    - CHART-uQBB7LQ7z6PYAd5CkVNkb
+    id: ROW-KtpO7Do2bhXoNk0eZIPOE
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-idL0Iai5J_GGjFkdVTYYa:
+    children:
+    - CHART-eN3gPGNdwxxjFJVpFInPp
+    - CHART-QuiQdgWq6CkseJQL599eU
+    id: ROW-idL0Iai5J_GGjFkdVTYYa
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-kPcJbotOd3ocjJXiah4bj:
+    children:
+    - CHART-3K0OHHlgNUY5PxGTjgZce
+    id: ROW-kPcJbotOd3ocjJXiah4bj
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+metadata:
+  chart_configuration:
+    '6':
+      id: 6
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+    '7':
+      id: 7
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+    '8':
+      id: 8
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 7
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+    '9':
+      id: 9
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 7
+        - 8
+        - 10
+        - 11
+        - 12
+        - 13
+    '10':
+      id: 10
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 7
+        - 8
+        - 9
+        - 11
+        - 12
+        - 13
+    '11':
+      id: 11
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 12
+        - 13
+    '12':
+      id: 12
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 13
+    '13':
+      id: 13
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+  global_chart_configuration:
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded: []
+    chartsInScope:
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+  map_label_colors:
+    COUNT(track_id): '#1FA8C9'
+    COUNT(playlist_id): '#1FA8C9'
+    AVG(avg_duration_minutes): '#1FA8C9'
+    COUNT(user_id): '#1FA8C9'
+    OffsetChangedEvent: '#1FA8C9'
+    SessionPaused: '#FF7F44'
+    SessionResumed: '#454E7C'
+    BitrateChangedEvent: '#5AC189'
+    SessionStopped: '#666666'
+    SessionStarted: '#E04355'
+    COUNT_DISTINCT(user_id): '#1FA8C9'
+    SUM(sent_chunks): '#1FA8C9'
+    SUM(acked_chunks): '#454E7C'
+  shared_label_colors:
+  - COUNT(track_id)
+  color_scheme: ''
+  refresh_frequency: 0
+  color_scheme_domain: []
+  expanded_slices: {}
+  label_colors: {}
+  timed_refresh_immune_slices: []
+  cross_filters_enabled: true
+  default_filters: '{}'
+version: 1.0.0

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message TrackDeleted {
+    string track_id = 1;
+}
+
+message TrackListened {
+  int64 current_chunk = 1;
+  int64 total_chunks = 2;
+}

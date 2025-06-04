@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+message ChangePasswordRequest {
+  string user_id       = 1;
+  string old_password  = 2;
+  string new_password  = 3;
+}
+
+message RegisterUserRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message RegisterUserResponse {
+  string user_id = 1;
+}
+
+message AuthenticateUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthenticateUserResponse {
+  string user_id = 1;
+}
+
+message GetUserInfoRequest {
+  string user_id = 1;
+}
+
+message GetUserInfoResponse {
+  string user_id = 1;
+  string username = 2;
+  string email = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+service UserCommandService {
+  rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse) {}
+  rpc ChangePassword(ChangePasswordRequest) returns (google.protobuf.Empty);
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
+}

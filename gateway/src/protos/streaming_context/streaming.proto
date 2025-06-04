@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+service StreamingService {
+  rpc StreamAudio(stream ClientMessage) returns (stream ServerMessage);
+}
+
+// Клиент -> Сервер
+message ClientMessage {
+  oneof message {
+    StartStream start = 1;
+    ChunkAck ack = 2;      // Подтверждение чанков
+    StreamControl control = 3;  // Управление (пауза/смена битрейта)
+  }
+}
+
+// Сервер -> Клиент
+message ServerMessage {
+  oneof message {
+    SessionInfo session = 1;  // Данные сессии
+    AudioChunk chunk = 2;     // Аудиоданные
+  }
+}
+
+// ===== КОМАНДЫ ===== //
+message StartStream {
+  string track_id = 1;
+  string user_id = 2;
+  string bitrate = 3;       // "128", "320"
+  optional string session_id = 4;  // Для переподключения
+}
+
+message ChunkAck {
+  int32 received_count = 1;
+}
+
+message StreamControl {
+  enum Action {
+    PAUSE = 0;
+    RESUME = 1;
+    STOP = 2;
+    CHANGE_BITRATE = 3;
+    SEEK = 4;
+  }
+  Action action = 1;
+  optional string bitrate = 2;  // Для CHANGE_BITRATE
+  optional int32 chunk_num = 3; // Для SEEK
+}
+
+// ===== ОТВЕТЫ ===== //
+message SessionInfo {
+  enum Status {
+    PAUSED = 0;
+    STOPPED = 1;
+    ACTIVE = 2;
+  }
+  string session_id = 1;    // Уникальный ID (серверный)
+  string current_bitrate = 2;
+  repeated string available_bitrates = 7;  // Новое поле (номер 7)
+  int64 current_chunk = 3;
+  int64 chunk_size = 4;
+  int64 total_chunks = 5;
+  Status status = 6;
+}
+
+
+message AudioChunk {
+  bytes data = 1;
+  int32 number = 2;         
+  bool is_last = 3;
+  string bitrate = 4;
+}

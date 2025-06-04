@@ -1,0 +1,14 @@
+syntax = "proto3";
+package music_catalog;
+
+message VerifyTrackRequest {
+  string track_id = 1;
+}
+
+message VerifyTrackResponse {
+  bool exists = 1;
+}
+
+service TrackQueryService {
+  rpc VerifyTrackExists(VerifyTrackRequest) returns (VerifyTrackResponse);
+}
