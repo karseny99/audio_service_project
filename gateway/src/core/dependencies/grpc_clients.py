@@ -2,7 +2,11 @@ import grpc
 from functools import lru_cache
 
 from src.core.config import settings
-from src.protos.user_context.generated import commands_pb2_grpc, track_pb2_grpc, track_search_pb2_grpc
+from src.protos.user_context.generated import (
+    commands_pb2_grpc, 
+    track_pb2_grpc, track_search_pb2_grpc, 
+    PlaylistCommands_pb2, PlaylistCommands_pb2_grpc
+)
 
 @lru_cache(maxsize=None)
 def get_track_search_channel() -> grpc.Channel:
@@ -44,3 +48,17 @@ def get_music_catalog_channel() -> grpc.Channel:
 def get_music_catalog_stub():
     channel = get_music_catalog_channel()
     return track_pb2_grpc.TrackQueryServiceStub(channel)
+
+@lru_cache(maxsize=None)
+def get_playlist_channel() -> grpc.Channel:
+    return grpc.insecure_channel(
+        settings.MUSIC_CATALOG_GRPC_URL,
+        options=[
+            ('grpc.keepalive_time_ms', 10000),
+            ('grpc.max_receive_message_length', 50 * 1024 * 1024)
+        ]
+    )
+
+def get_playlist_stub():
+    channel = get_playlist_channel()
+    return PlaylistCommands_pb2_grpc.PlaylistCommandServiceStub(channel)

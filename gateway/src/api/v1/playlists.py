@@ -4,16 +4,16 @@ from pydantic import BaseModel
 from src.services.playlist_service import add_playlist
 from src.schemas.playlist import AddPlaylistRequest, AddPlaylistResponse
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(prefix="/playlists", tags=["Playlists"])
 
 @router.post(
-    "/subscribe",
-    summary="Subscribe to a public playlist",
+    "/add",
+    summary="Add a public playlist",
     status_code=status.HTTP_200_OK
 )
 @inject
-async def subscribe_to_playlist_endpoint(
-        payload: AddRequestModel,  # Pydantic-модель
+async def add_playlist_endpoint(
+        payload: AddPlaylistRequest,  
         request: Request,
 ):
     user_id: str = request.state.user_id
@@ -22,7 +22,10 @@ async def subscribe_to_playlist_endpoint(
             user_id=user_id,
             playlist_id=payload.playlist_id
         )
-        return {"status": "subscribed"}
+        resp = AddPlaylistResponse(
+            status="added"
+        )
+        return resp
     
     except ValueError as e:
         raise HTTPException(

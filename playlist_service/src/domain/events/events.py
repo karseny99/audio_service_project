@@ -16,3 +16,8 @@ class TrackAddedToPlaylist(PlaylistEvent):
     track_id: int
     user_id: int
     timestamp: datetime
+
+@dataclass
+class UserDeleted(PlaylistEvent):
+    playlist_id: int
+    user_id: int

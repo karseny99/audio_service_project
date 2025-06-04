@@ -10,6 +10,7 @@ from src.api.v1.auth import router as auth_router
 from src.api.v1.users import router as users_router
 from src.api.v1.tracks import router as tracks_router
 from src.api.v1.streaming import router as streaming_router
+from src.api.v1.playlists import router as playlists_router
 import uvicorn
 
 app = FastAPI(title="API Gateway")
@@ -19,6 +20,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(tracks_router)
 app.include_router(streaming_router)
+app.include_router(playlists_router)
 app.add_middleware(AuthMiddleware)
 
 

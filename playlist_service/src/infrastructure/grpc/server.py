@@ -2,6 +2,8 @@ from src.core.config import settings
 from src.core.logger import logger
 from src.core.protos.generated import PlaylistCommands_pb2_grpc
 from src.applications.use_cases.add_track import AddTrackToPlaylistUseCase
+from src.applications.use_cases.add_playlist import AddPlaylistUseCase
+
 from src.core.di import Container
 from src.core.exceptions import (
     ValueObjectException,
@@ -20,9 +22,11 @@ class PlaylistCommandService(PlaylistCommands_pb2_grpc.PlaylistCommandServiceSer
     @inject
     def __init__(
         self,
-        add_track_use_case: AddTrackToPlaylistUseCase = Provide[Container.add_track_use_case]
+        add_track_use_case: AddTrackToPlaylistUseCase = Provide[Container.add_track_use_case],
+        add_playlist_use_case: AddPlaylistUseCase = Provide[Container.add_playlist_use_case]
     ):
         self._add_track_use_case = add_track_use_case
+        self._add_playlist_use_case = add_playlist_use_case
     
     async def AddTrackToPlaylist(self, request, context: ServicerContext):
         try:
@@ -44,8 +48,8 @@ class PlaylistCommandService(PlaylistCommands_pb2_grpc.PlaylistCommandServiceSer
 
     async def AddPlaylist(self, request, context: ServicerContext):
         try:
-            await self._subscribe_to_playlist_uc.execute(
-                playlist_id=int(request.playlist_id),
+            await self._add_playlist_use_case.execute(
+                playlist_id=request.playlist_id,
                 user_id=request.user_id
             )
             return empty_pb2.Empty()

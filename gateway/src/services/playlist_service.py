@@ -1,17 +1,16 @@
 import sys
 from grpc import RpcError, StatusCode
-from src.core.dependencies.grpc_clients import get_user_command_stub
-from src.protos.user_context.generated import commands_pb2, commands_pb2_grpc
-from src.core.password_utils import hash_password
+from src.core.dependencies.grpc_clients import get_playlist_stub
+from src.protos.user_context.generated import PlaylistCommands_pb2, PlaylistCommands_pb2_grpc
 
 def add_playlist(user_id: str, playlist_id: str) -> None:
-    stub = get_playlist_command_stub()
-    request = playlist_pb2.SubscribeToPlaylistRequest(
+    stub = get_playlist_stub()
+    request = PlaylistCommands_pb2.AddPlaylistRequest(
         user_id=user_id,
         playlist_id=playlist_id
     )
     try:
-        stub.SubscribeToPlaylist(request, timeout=5.0)
+        stub.AddPlaylist(request, timeout=5.0)
     except RpcError as e:
         code = e.code()
         if code == StatusCode.NOT_FOUND:
