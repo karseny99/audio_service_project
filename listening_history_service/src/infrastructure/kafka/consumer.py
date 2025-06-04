@@ -40,10 +40,12 @@ class KafkaConsumer:
                     logger.warning(f"Unknown event type: {event_type}")
                     return
                 
+
                 mapping = self._event_mappings[event_type]
                 proto_message = mapping.proto_type()
                 proto_message.ParseFromString(msg.body)
                 
+                logger.debug(f"Event received: {proto_message}")
                 await mapping.handler.handle(proto_message)
                 
             except Exception as e:

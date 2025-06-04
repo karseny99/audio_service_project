@@ -16,6 +16,7 @@ setuptools = "^80.8.0"
 
 elasticsearch = { version = "^8.0.0", extras = ["async"] }
 uvloop = "^0.17"
+redis = "^6.2.0"
 
 [tool.poetry.dev-dependencies]
 

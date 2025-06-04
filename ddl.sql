@@ -16,16 +16,6 @@ CREATE TABLE user_profile.users (
 	CONSTRAINT users_username_key UNIQUE (username)
 );
 
-CREATE TABLE user_profile.user_audit_log (
-    log_id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES user_profile.users(user_id),
-    field_name VARCHAR(50) NOT NULL,
-    old_value TEXT,
-    new_value TEXT,
-    changed_by BIGINT NOT NULL, -- Кто внес изменение
-    changed_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- 2. Playlist Context
 CREATE TABLE playlist.playlists (
     playlist_id BIGSERIAL PRIMARY KEY,
@@ -51,17 +41,6 @@ CREATE TABLE playlist.playlist_users (
 
 
 -- 3. Listening History Context
--- Основная таблица действий
-CREATE TABLE listening_history.user_actions (
-    action_id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL, -- Без FK (пользователь в другом контексте)
-    track_id BIGINT NOT NULL, -- Без FK (трек в Music Catalog Context)
-    action_type VARCHAR(20) NOT NULL, -- 'play', 'like', 'skip'
-    duration_played INT, -- Для прослушиваний (в ms)
-    timestamp TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Специализированная таблица лайков (оптимизированная для запросов)
 CREATE TABLE listening_history.user_likes (
     user_id BIGINT NOT NULL,
     track_id BIGINT NOT NULL,
@@ -69,15 +48,12 @@ CREATE TABLE listening_history.user_likes (
     PRIMARY KEY (user_id, track_id)
 );
 
--- Агрегированные данные для аналитики
-CREATE TABLE listening_history.user_listening_stats (
-    user_id BIGINT PRIMARY KEY,
-    total_plays INT DEFAULT 0,
-    avg_daily_plays FLOAT,
-    favorite_genres VARCHAR[],
-    last_updated TIMESTAMPTZ
+CREATE TABLE listening_history.user_history (
+    user_id BIGINT NOT NULL,
+    track_id BIGINT NOT NULL,
+    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (user_id, track_id)
 );
-
 
 -- 4. Music Catalog Context
 CREATE TABLE music_catalog.artists (
@@ -116,20 +92,11 @@ CREATE TABLE music_catalog.track_genres (
 
 CREATE TABLE music_catalog.bitrates (
     bitrate_id SERIAL PRIMARY KEY,
-    name VARCHAR(20) NOT NULL,  -- Например, "128kbps", "320kbps", "Lossless"
+    name VARCHAR(20),  -- Например, "128kbps", "320kbps", "Lossless"
 );
-
-INSERT INTO music_catalog.bitrates (name)
-VALUES 
-    ('96kbps'),
-    ('128kbps'),
-    ('192kbps'),
-    ('320kbps'),
-    ('Lossless');
-
 
 CREATE TABLE music_catalog.track_bitrates (
     track_id BIGINT REFERENCES music_catalog.tracks(track_id) ON DELETE CASCADE,
     bitrate_id INT REFERENCES music_catalog.bitrates(bitrate_id) ON DELETE CASCADE,
     PRIMARY KEY (track_id, bitrate_id)
-
+)

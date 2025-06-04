@@ -28,7 +28,7 @@ class TrackQueryService(TrackCommands_pb2_grpc.TrackQueryServiceServicer):
     def __init__(self):
         self._get_tracks_by_artist_uc = Container.get_tracks_by_artist_use_case()
         self._get_tracks_by_genre_uc = Container.get_tracks_by_genre_use_case()
-        # self._get_track_uc = Container.get_track_use_case()
+        self._get_track_uc = Container.get_track_use_case()
 
     async def GetTracksByArtist(self, request, context):
         try:
@@ -37,8 +37,7 @@ class TrackQueryService(TrackCommands_pb2_grpc.TrackQueryServiceServicer):
                 offset=request.pagination.offset,
                 limit=request.pagination.limit
             )
-            
-            return TrackCommands_pb2.TrackListResponse(
+            response = TrackCommands_pb2.TrackListResponse(
                 tracks=[self._convert_track_to_proto(track) for track in tracks],
                 pagination=TrackCommands_pb2.Pagination(
                     total=len(tracks),
@@ -46,6 +45,7 @@ class TrackQueryService(TrackCommands_pb2_grpc.TrackQueryServiceServicer):
                     limit=request.pagination.limit
                 )
             )
+            return response
         except Exception as e:
             await context.abort(grpc.StatusCode.INTERNAL, str(e))
 
@@ -59,7 +59,7 @@ class TrackQueryService(TrackCommands_pb2_grpc.TrackQueryServiceServicer):
                 limit=request.pagination.limit
             )
             
-            return TrackCommands_pb2.TrackListResponse(
+            response = TrackCommands_pb2.TrackListResponse(
                 tracks=[self._convert_track_to_proto(track) for track in tracks],
                 pagination=TrackCommands_pb2.Pagination(
                     total=len(tracks),
@@ -67,37 +67,23 @@ class TrackQueryService(TrackCommands_pb2_grpc.TrackQueryServiceServicer):
                     limit=request.pagination.limit
                 )
             )
+            return response
         except Exception as e:
             await context.abort(grpc.StatusCode.INTERNAL, str(e))
 
     async def GetTrack(self, request, context: ServicerContext):
         try:
-            track = await self._get_track_use_case.execute(
+            logger.debug(f"{request.track_id} received")
+            track = await self._get_track_uc.execute(
                 track_id=request.track_id,
             )
+
+            logger.debug(track)
+
             created_at = timestamp_pb2.Timestamp()
             created_at.FromDatetime(track.created_at)
             
-            return TrackCommands_pb2.Track(
-                track_id=track.track_id,
-                title=track.title,
-                duration=track.duration,
-                artists=[
-                    TrackCommands_pb2.ArtistInfo(
-                        artist_id=a.artist_id,
-                        name=a.name,
-                    ) for a in track.artists
-                ],
-                genres=[
-                    TrackCommands_pb2.Genre(
-                        genre_id=g.genre_id,
-                        name=g.name
-                    ) for g in track.genres
-                ],
-                explicit=track.explicit,
-                release_date=track.release_date.isoformat(),
-                created_at=created_at
-            )
+            return self._convert_track_to_proto(track)
 
         except ValueObjectException as e:
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
@@ -105,6 +91,58 @@ class TrackQueryService(TrackCommands_pb2_grpc.TrackQueryServiceServicer):
             await context.abort(grpc.StatusCode.NOT_FOUND, str(e))
         except Exception as e:
             await context.abort(grpc.StatusCode.INTERNAL, str(e))
+
+    async def VerifyTrackExists(self, request, context: ServicerContext):
+        try:
+            try:
+                track = await self._get_track_uc.execute(
+                    track_id=request.track_id,
+                )
+            except TrackNotFound:
+                return TrackCommands_pb2.VerifyTrackResponse(exists=False)
+
+            return TrackCommands_pb2.VerifyTrackResponse(exists=True)
+        except ValueObjectException as e:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            await context.abort(grpc.StatusCode.INTERNAL, str(e))
+    
+    def _convert_track_to_proto(self, track) -> TrackCommands_pb2.Track:
+        # Преобразование даты создания в protobuf Timestamp
+        created_at = Timestamp()
+        created_at.FromDatetime(track.created_at)
+        
+        # Основные поля трека
+        proto_track = TrackCommands_pb2.Track(
+            track_id=track.track_id,
+            title=track.title,
+            duration_ms=track.duration.value if track.duration else 0,
+            explicit=track.explicit,
+            release_date=track.release_date.isoformat() if track.release_date else "",
+            created_at=created_at
+        )
+        
+        # Добавление артистов
+        for artist in track.artists:
+            proto_track.artists.append(
+                TrackCommands_pb2.Artist(
+                    artist_id=artist.artist_id,
+                    name=artist.name,
+                    is_verified=artist.is_verified
+                )
+            )
+        
+        # Добавление жанров
+        for genre in track.genres:
+            proto_track.genres.append(
+                TrackCommands_pb2.Genre(
+                    genre_id=genre.genre_id,
+                    name=genre.name
+                )
+            )
+        
+        return proto_track
+
 
 async def serve_grpc():
    

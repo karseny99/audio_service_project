@@ -130,9 +130,9 @@ class Container(containers.DeclarativeContainer):
 
     @classmethod
     async def init_resources(cls):
-        publisher = cls.kafka_publisher()
+        # publisher = cls.kafka_publisher()
         publisher_reg_uc = cls.kafka_publisher_register_uc()
-        await publisher.connect()
+        # await publisher.connect()
         await publisher_reg_uc.connect()
         
         redis = cls.redis_client()
@@ -145,9 +145,9 @@ class Container(containers.DeclarativeContainer):
 
 
         
-        publisher = cls.kafka_publisher()
+        # publisher = cls.kafka_publisher()
         publisher_reg_uc = cls.kafka_publisher_register_uc()
-        if publisher:  # Проверка на None
-            await publisher.disconnect()
+        # if publisher:  # Проверка на None
+        #     await publisher.disconnect()
         if publisher_reg_uc:
             await publisher_reg_uc.disconnect()

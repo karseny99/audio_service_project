@@ -10,6 +10,7 @@ class RedisCacheRepository:
     
     async def get(self, key: str) -> Optional[str]:
         try:
+            logger.error(f"Redis GET for {key}")
             return await self._redis.client.get(key)
         except Exception as e:
             logger.error(f"Redis GET error: {str(e)}")
@@ -18,6 +19,7 @@ class RedisCacheRepository:
     async def set(self, key: str, value: str, ttl: int) -> None:
         try:
             await self._redis.client.set(key, value, ex=ttl)
+            logger.error(f"Redis SET for {key}")
         except Exception as e:
             logger.error(f"Redis SET error: {str(e)}")
     

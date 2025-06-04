@@ -13,6 +13,7 @@ class StreamStatus(Enum):
     PAUSED = auto()
     STOPPED = auto()
     SHOULD_RESTART = auto()
+    ARTIFICIAL_CHUNK = auto()
 
 
 @dataclass
@@ -51,9 +52,15 @@ class StreamSession:
     def stop(self):
         self.status = StreamStatus.STOPPED
 
+    def prestop(self):
+        self.status = StreamStatus.ARTIFICIAL_CHUNK
+
+    def should_stop(self) -> bool:
+        return self.status == StreamStatus.ARTIFICIAL_CHUNK
+    
     def should_continue(self) -> bool:
         """Проверяет, можно ли продолжать отправку чанков"""
-        return self.status in (StreamStatus.STARTED, StreamStatus.SHOULD_RESTART)
+        return self.status in (StreamStatus.STARTED, StreamStatus.SHOULD_RESTART, StreamStatus.ARTIFICIAL_CHUNK)
 
     def is_active(self) -> bool:
         """Проверяет, активна ли сессия (не остановлена и не завершена)"""

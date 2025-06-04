@@ -31,9 +31,7 @@ services:
         echo "Applying DDL to audio_db…"
         psql -h postgres -U user -d audio_db -f /ddl.sql
         echo "DDL applied."
-    # после выполнения контейнер остановится
 
-  # Zookeeper (обязателен для Kafka)
   zookeeper:
     image: bitnami/zookeeper:3.9
     hostname: zookeeper
@@ -123,6 +121,22 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
+  
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
 
   db-restore:
     image: postgres:17-alpine
@@ -163,12 +177,30 @@ services:
     networks:
       - minio_net
 
+  elasticsearch:
+    image: elasticsearch:8.18.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g  
+      - xpack.security.enabled=false
+      - bootstrap.memory_lock=true   
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+
 volumes:
   zookeeper_data:
   kafka_data:
   postgres_data:
   redis_data:
   minio_data:
+  es_data:
 
 networks:
   minio_net:

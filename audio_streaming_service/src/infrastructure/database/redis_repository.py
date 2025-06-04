@@ -1,9 +1,7 @@
-import uuid
 import json
 import pickle
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, is_dataclass
@@ -33,6 +31,9 @@ class RedisStreamingRepository(StreamingRepository):
         """
         self._redis = redis_client
         self._ttl = ttl_seconds
+
+    def _connect(self):
+        self._redis.connect()
 
     def _serialize_session(self, session: StreamSession) -> bytes:
         """Сериализация сессии в bytes для Redis, исключая несериализуемые поля"""
@@ -111,9 +112,10 @@ class RedisStreamingRepository(StreamingRepository):
         """Генерирует ключ для Redis"""
         return f"stream_session:{session_id}"
 
-    async def get(self, session_id: UUID) -> Optional[StreamSession]:
+    async def get(self, session_id: str) -> Optional[StreamSession]:
         """Получить сессию по ID"""
         try:
+            self._connect()
             key = self._get_redis_key(session_id)
             data = await self._redis.client.get(key)
             return self._deserialize_session(data) if data else None
@@ -124,6 +126,7 @@ class RedisStreamingRepository(StreamingRepository):
     async def save(self, session: StreamSession) -> None:
         """Сохранить или обновить сессию"""
         try:
+            self._connect()
             key = self._get_redis_key(session.session_id)
             data = self._serialize_session(session)
             await self._redis.client.set(key, data, ex=self._ttl)
@@ -131,7 +134,7 @@ class RedisStreamingRepository(StreamingRepository):
             logger.error(f"Failed to save session {session.session_id}: {str(e)}")
             raise SessionRepositoryError("Failed to save session")
 
-    async def delete(self, session_id: UUID) -> bool:
+    async def delete(self, session_id: str) -> bool:
         """Удалить сессию (возвращает True если сессия существовала)"""
         try:
             key = self._get_redis_key(session_id)

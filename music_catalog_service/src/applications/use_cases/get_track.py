@@ -19,11 +19,10 @@ class GetTrackUseCase:
         self._cache_serializer = cache_serializer 
 
 
-    @cached(ttl=CacheTTL.DEFAULT)
+    # @cached(ttl=CacheTTL.DEFAULT)
     async def execute(self, track_id: int) -> Track:
-        track = await self._repo.get_by_id(track_id=track_id)
-
+        track = await self._repo.get_by_id(track_id=int(track_id))
         if not track:
-            raise TrackNotFound(f"Track_{track_id} not found")
+            raise TrackNotFound()
 
         return track

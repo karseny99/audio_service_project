@@ -8,7 +8,8 @@ from src.domain.events.events import (
     SessionPaused,
     SessionResumed,
     SessionStopped,
-    OffsetChangedEvent
+    OffsetChangedEvent,
+    SessionHistory
 )
 from src.domain.stream.models import StreamSession, StreamStatus
 from src.domain.stream.repository import StreamingRepository, AudioStreamer
@@ -74,8 +75,10 @@ class StopSessionUseCase:
         self,
         session_repo: StreamingRepository,
         event_publisher: EventPublisher,
+        history_event_publisher: EventPublisher,
     ):
         self._event_publisher = event_publisher
+        self._history_event_publisher = history_event_publisher
         self._session_repo = session_repo
 
     async def execute(self, session: StreamSession) -> None:
@@ -86,10 +89,22 @@ class StopSessionUseCase:
             event=SessionStopped(
                 session_id=session.session_id,
                 total_chunks_sent=session.total_chunks_sent,
-                timestamp=session.finished_at,
+                timestamp=datetime.now(),
             ),
             key=str(session.session_id)
         )
+
+        await self._history_event_publisher.publish(
+            event=SessionHistory(
+                user_id=session.user_id,
+                track_id=session.track.track_id,
+                total_chunks=session.track.total_chunks,
+                total_chunks_sent=session.total_chunks_sent-1,
+                timestamp=datetime.now()
+            ),
+            key=str(session.user_id)
+        )
+
 
 class ChangeSessionBitrateUseCase:
     def __init__(

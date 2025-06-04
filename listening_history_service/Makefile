@@ -31,6 +31,14 @@ generate:
 		--pyi_out=./src/core/protos/generated \
 		./src/core/protos/UserEvents.proto
 	
+	# Генерируем код для SessionEvents
+	poetry run python3 -m grpc_tools.protoc \
+		-I./src/core/protos \
+		--python_out=./src/core/protos/generated \
+		--grpc_python_out=./src/core/protos/generated \
+		--pyi_out=./src/core/protos/generated \
+		./src/core/protos/StreamEvents.proto
+
 	# Исправляем импорты для TrackCommands
 	sed -i 's/^import TrackCommands_pb2/from src.core.protos.generated import TrackCommands_pb2/' src/core/protos/generated/TrackCommands_pb2_grpc.py
 	sed -i 's/^import TrackCommands_pb2/from src.core.protos.generated import TrackCommands_pb2/' src/core/protos/generated/TrackCommands_pb2.py
@@ -44,6 +52,9 @@ generate:
 	
 	# Исправляем импорты для UserEvents
 	sed -i 's/^import UserEvents_pb2/from src.core.protos.generated import UserEvents_pb2/' src/core/protos/generated/*.py
+
+	# Исправляем импорты для SessionEvents
+	sed -i 's/^import SessionEvents_pb2/from src.core.protos.generated import SessionEvents
 
 	# Создаем пустой __init__.py
 	touch src/core/protos/generated/__init__.py

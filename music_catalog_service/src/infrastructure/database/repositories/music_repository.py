@@ -23,6 +23,25 @@ class PostgresMusicRepository(MusicRepository):
         )
 
     @ConnectionDecorator()
+    async def get_by_id(
+        self,
+        track_id: int,
+        session: AsyncSession | None = None
+    ) -> Track | None:
+        stmt = (
+            select(TrackORM)
+            .options(
+                selectinload(TrackORM.artists).selectinload(TrackArtistORM.artist),
+                selectinload(TrackORM.genres).selectinload(TrackGenreORM.genre)
+            )
+            .where(TrackORM.track_id == track_id)
+        )
+        result = await session.execute(stmt)
+        track_orm = result.scalars().first()
+        return self._convert_to_domain(track_orm) if track_orm else None
+
+
+    @ConnectionDecorator()
     async def get_by_artist(
         self,
         artist_id: int,

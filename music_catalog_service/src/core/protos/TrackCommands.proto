@@ -59,11 +59,8 @@ message GetTrackRequest {
 }
 
 service TrackQueryService {
+  rpc GetTrack(GetTrackRequest) returns (Track);
+  rpc VerifyTrackExists(VerifyTrackRequest) returns (VerifyTrackResponse);
   rpc GetTracksByArtist(GetTracksByArtistRequest) returns (TrackListResponse);
   rpc GetTracksByGenre(GetTracksByGenreRequest) returns (TrackListResponse);
 }
-
-// service TrackService {
-//   rpc VerifyTrackExists(VerifyTrackRequest) returns (VerifyTrackResponse);
-//   rpc GetTrack(GetTrackRequest) returns (Track);
-// }

@@ -35,11 +35,8 @@ def cached(
             # Проверка кэша
             cached_data = await cache_repo.get(cache_key)
             if cached_data is not None:
-                logger.debug(f"Cache for {cache_key} found")
                 return_type = func.__annotations__.get('return')
                 return _serializer.deserialize(cached_data, return_type)
-            else:
-                logger.debug(f"Cache for {cache_key} not found")
             
             # Выполнение и кэширование
             result = await func(self, *args, **kwargs)
@@ -48,7 +45,6 @@ def cached(
                 _serializer.serialize(result), 
                 ttl
             )
-            logger.debug(f"Cached result for {cache_key}")
             
             return result
         return wrapper

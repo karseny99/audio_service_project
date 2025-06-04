@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from dependency_injector.wiring import inject, Provide
 from pydantic import BaseModel
-from src.services.user_service import change_password, get_user_info
-from src.schemas.user import ChangePasswordRequest, ChangePasswordResponse, GetUserInfoResponse
-
+from src.services.user_service import change_password, get_user_info, get_user_likes, like_track
+from src.schemas.user import ChangePasswordRequest, ChangePasswordResponse, GetUserInfoResponse, GetUserLikesResponse, GetUserLikesResponse, GetUserHistoryResponse, GetUserHistoryResponse, LikeTrackRequest
+from src.core.logger import logger
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -19,6 +19,7 @@ async def change_password_endpoint(
 ):
     user_id: str = request.state.user_id
     try:
+        logger.debug(f"change password: {request}")
         change_password(
             user_id=user_id,
             old_password=payload.old_password,
@@ -44,14 +45,14 @@ async def change_password_endpoint(
         )
 
 
-@router.get(  # в этом блоке не очень уверен 
+@router.get(  
     "/get-user-info",
     summary="Get user info",
     status_code=status.HTTP_200_OK
 )
 @inject
 async def get_user_info_endpoint(
-        request: Request,  # от AuthMiddleware в state.user_id
+    request: Request,  
 ):
     user_id: str = request.state.user_id
     # user_id = int(request.state.user_id)
@@ -81,3 +82,4 @@ async def get_user_info_endpoint(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(e)
         )
+

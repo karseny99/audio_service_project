@@ -25,3 +25,12 @@ def get_tracks_by_genre(genre_id: int, offset: int, limit: int):
         return stub.GetTracksByGenre(request)
     except RpcError as e:
         raise RuntimeError(f"Music Catalog Service error: {e.code().name}")
+
+
+def get_track_by_id(track_id: int):
+    stub = get_music_catalog_stub()
+    request = track_pb2.GetTrackRequest(
+        track_id=track_id,
+    )
+    response = stub.GetTrack(request)
+    return response

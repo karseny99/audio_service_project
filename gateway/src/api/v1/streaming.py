@@ -5,6 +5,9 @@ from fastapi import APIRouter, Depends, status
 from fastapi.websockets import WebSocketState
 import grpc
 from pydantic import BaseModel
+
+from src.core.logger import logger
+from src.core.config import settings
 import src.protos.streaming_context.generated.streaming_pb2 as pb2 
 import src.protos.streaming_context.generated.streaming_pb2_grpc as pb2_grpc 
 
@@ -22,7 +25,7 @@ session_state = SessionState()
 # gRPC клиентclass GRPCAudioClient:
 class GRPCAudioClient:
     def __init__(self):
-        self.channel = grpc.aio.insecure_channel('localhost:50056')
+        self.channel = grpc.aio.insecure_channel(settings.STREAMING_SERVICE_GRPC_URL)
         self.stub = pb2_grpc.StreamingServiceStub(self.channel)
         self.stream = None
         self._receive_task = None
@@ -65,8 +68,8 @@ class GRPCAudioClient:
                 
                 if response.HasField('chunk'):
                     await session_state.chunk_queues[session_id].put(response.chunk)
-                    if response.chunk.is_last:
-                        break
+                    # if response.chunk.is_last:
+                    #     break
                 
                 elif response.HasField('session'):
                     parsed = self._parse_session_info(response.session)
@@ -203,7 +206,7 @@ async def websocket_chunks(websocket: WebSocket, session_id: str):
         return
     
     session_state.websockets[session_id] = websocket
-    
+    is_artificial = False
     try:
         ack_counter = 0
         last_chunk_number = 0
@@ -211,25 +214,25 @@ async def websocket_chunks(websocket: WebSocket, session_id: str):
         while True:
             # Получаем чанк из очереди
             chunk = await session_state.chunk_queues[session_id].get()
-            await websocket.send_text(str(chunk.number))
+
+            if not is_artificial:
+                await websocket.send_text(str(chunk.number))
 
             ack_counter += 1
-            last_chunk_number = chunk.number
             
             # Отправляем подтверждение 
-            if ack_counter >= 10:
+            if ack_counter >= 10 or chunk.is_last:
                 await session_state.active_sessions[session_id]["client"].send_ack(ack_counter)
                 ack_counter = 0
+ 
+                if chunk.is_last:
+                    is_artificial = True
                 
     except WebSocketDisconnect:
         pass
     except Exception as e:
         print(f"WebSocket error: {e}")
     finally:
-        # Отправляем оставшиеся подтверждения
-        if ack_counter > 0 and session_id in session_state.active_sessions:
-            await session_state.active_sessions[session_id]["client"].send_ack(ack_counter)
-            ack_counter = 0
         
         if session_id in session_state.websockets:
             del session_state.websockets[session_id]
@@ -260,14 +263,11 @@ async def start_stream(request: StartStreamRequest):
             "client": grpc_client  # Сохраняем клиент в сессии
         }
         
-        # Очередь создается автоматически в _start_background_receiver
-        # Фоновая задача уже запущена внутри start_stream
         
         return session_data
         
     except Exception as e:
-        raise
-        # raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
     
 
 # HTTP endpoint для управления сессией
@@ -303,8 +303,7 @@ async def control_stream(session_id: str, request: ControlStreamRequest):
             "status": session_info["status"]
         }
     except Exception as e:
-        raise
-        # raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
     
 
 # HTTP endpoint для получения информации о сессии

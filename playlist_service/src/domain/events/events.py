@@ -10,6 +10,9 @@ class PlaylistEvent:
     """
     pass
 
+class UserDeleted:
+    user_id: int
+
 @dataclass
 class TrackAddedToPlaylist(PlaylistEvent):
     playlist_id: int

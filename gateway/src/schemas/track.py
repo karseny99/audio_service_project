@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
 
 
 class ArtistResponse(BaseModel):
@@ -12,20 +12,62 @@ class GenreResponse(BaseModel):
     genre_id: int
     name: str
 
+
+class ArtistResponse(BaseModel):
+    artist_id: int
+    name: str
+    is_verified: bool
+
+class GenreResponse(BaseModel):
+    genre_id: int
+    name: str
+
 class TrackResponse(BaseModel):
     track_id: int
     title: str
-    duration_ms: int
     artists: List[ArtistResponse]
     genres: List[GenreResponse]
+    duration_ms: int
     explicit: bool
-    release_date: str
+    release_date: str  # ISO format date string
+    created_at: datetime
+
+class PaginationResponse(BaseModel):
+    offset: int
+    limit: int
+    total: int
 
 class TracksPaginationResponse(BaseModel):
     tracks: List[TrackResponse]
-    total: int = Field(..., description="Total number of tracks")
-    offset: int = Field(0, ge=0)
-    limit: int = Field(50, le=100)
+    pagination: PaginationResponse
+
+    @classmethod
+    def from_proto(cls, proto_response):
+        """Alternative constructor from protobuf message"""
+        return cls(
+            tracks=[TrackResponse(
+                track_id=t.track_id,
+                title=t.title,
+                artists=[ArtistResponse(
+                    artist_id=a.artist_id,
+                    name=a.name,
+                    is_verified=a.is_verified
+                ) for a in t.artists],
+                genres=[GenreResponse(
+                    genre_id=g.genre_id,
+                    name=g.name
+                ) for g in t.genres],
+                duration_ms=t.duration_ms,
+                explicit=t.explicit,
+                release_date=t.release_date,
+                created_at=t.created_at.ToDatetime()
+            ) for t in proto_response.tracks],
+            pagination=PaginationResponse(
+                offset=proto_response.pagination.offset,
+                limit=proto_response.pagination.limit,
+                total=proto_response.pagination.total
+            )
+        )
 
 class TracksByArtistRequest(BaseModel):
     artist_id: int = Field(..., description="ID of the artist")

@@ -1,3 +1,4 @@
+from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Optional, List
 from src.domain.user_likes.models import UserLike
@@ -12,6 +13,11 @@ class UserLikesRepository(ABC):
     async def remove_like(self, user_id: int, track_id: int) -> bool:
         """Удаляет лайк треку от пользователя, возвращает успешность операции"""
         raise NotImplementedError
+
+    @abstractmethod
+    async def remove_likes(self, user_id: int, track_id: int) -> bool:
+        """Удаляет лайки от пользователя"""
+        raise NotImplementedError
         
     @abstractmethod
     async def get_user_likes(self, user_id: int) -> List[int]:
@@ -22,3 +28,14 @@ class UserLikesRepository(ABC):
     async def is_liked(self, user_id: int, track_id: int) -> bool:
         """Проверяет, лайкнул ли пользователь трек"""
         raise NotImplementedError
+    
+    @abstractmethod
+    async def get_history(self, user_id: int, count: int, offset: int) -> list:
+        raise NotImplementedError
+    
+    @abstractmethod
+    async def add_to_history(self, user_id: int, track_id: int, timestamp: datetime) -> bool:
+        raise NotImplementedError
+    
+
+    

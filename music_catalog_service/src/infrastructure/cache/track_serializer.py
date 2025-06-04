@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Any, Optional
+from typing import Any, Optional, Type, List
 from datetime import datetime, date
 
 from src.domain.cache.serialization import CacheSerializer
@@ -26,12 +26,12 @@ class TrackSerializer(CacheSerializer):
         return self._base.deserialize(data)
 
     @deserialize.register     # single track
-    def _(self, data: bytes) -> Optional[Track]:
+    def _(self, data: bytes, return_type: Type[Track]) -> Optional[Track]:
         decoded = self._base.deserialize(data, dict)
         return None if decoded is None else self._from_dict(decoded)
 
     @deserialize.register     # list of tracks
-    def _(self, data: bytes) -> list[Track]:
+    def _(self, data: bytes, return_type: List[Type[Track]]) -> list[Track]:
         decoded = self._base.deserialize(data, list)
         return [self._from_dict(d) for d in decoded]
 

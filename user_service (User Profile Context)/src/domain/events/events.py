@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from google.protobuf.message import Message
 
 class UserEvent:
