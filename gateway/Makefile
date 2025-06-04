@@ -65,6 +65,8 @@ generate:
 	sed -i 's/^import LikeCommands_pb2/from src.protos.listening_history_context.generated import LikeCommands_pb2/' src/protos/listening_history_context/generated/*.py
 	sed -i 's/^import LikeCommands_pb2_grpc/from src.protos.listening_history_context.generated import LikeCommands_pb2_grpc/' src/protos/listening_history_context/generated/*.py
 
+	sed -i 's/^import PlaylistCommands_pb2/from src.protos.user_context.generated import PlaylistCommands_pb2/' src/protos/user_context/generated/*.py
+	sed -i 's/^import PlaylistCommands_pb2_grpc/from src.protos.user_context.generated import PlaylistCommands_pb2_grpc/' src/protos/user_context/generated/*.py
 
 install:
 	poetry add grpcio grpcio-tools
