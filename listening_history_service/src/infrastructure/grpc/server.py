@@ -62,12 +62,14 @@ class LikeCommandService(LikeCommands_pb2_grpc.LikeCommandServiceServicer):
 
     async def GetUserLikes(self, request, context: ServicerContext):
         try:
+            logger.debug(request)
             track_ids = await self._get_user_likes_use_case.execute(
-                user_id=request.user_id,
+                user_id=int(request.user_id),
                 count=request.limit,
                 offset=request.offset
             )
 
+            logger.debug(track_ids)
             return LikeCommands_pb2.GetUserLikesResponse(
                 tracks=[track_id for track_id in track_ids],
             )
